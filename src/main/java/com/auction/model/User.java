@@ -1,11 +1,11 @@
 package com.auction.model;
 
-public abstract class User {
-    private int userId;
+public abstract class User extends Entity {
     private String userName;
     private String password;
     private String email; 
     private boolean isLoggedIn;
+    
     public User(int userId, String userName, String password, String email) {
         this.userId = userId;
         this.userName = userName;
@@ -13,9 +13,7 @@ public abstract class User {
         this.email = email;
         this.isLoggedIn = false;
     } 
-    public int getId() {
-        return this.userId;
-    }
+    
     public String getName() {
         return this.userName;
     }
