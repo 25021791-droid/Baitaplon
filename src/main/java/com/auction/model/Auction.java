@@ -9,18 +9,11 @@ public class Auction {
     private double currentPrice;
     private AuctionStatus status;
 
-    public Auction(Item item) {
+    public Auction(Item item,double StartingPrice) {
         this.item = item;
-        this.currentPrice = item.getStartingPrice();
+        this.currentPrice = StartingPrice;
         this.bids = new ArrayList<>();
         this.status = AuctionStatus.OPEN;
-    }
-    public void closeAuction() {
-        status = AuctionStatus.FINISHED;
-        if (!bids.isEmpty()) {
-            Bid winner = bids.get(bids.size() - 1);
-            System.out.println("Winner: " + winner.getBidder().getName());
-        }
     }
     public List<Bid> getBids() { return bids; }
     public double getCurrentPrice() { return currentPrice; }
