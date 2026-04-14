@@ -1,6 +1,3 @@
-// createAuction()
-// closeAuction()
-// show winner or something
 package com.auction.service;
 
 import com.auction.model.*;
