@@ -7,7 +7,7 @@ public abstract class User extends Entity {
     private boolean isLoggedIn;
     
     public User(int userId, String userName, String password, String email) {
-        this.userId = userId;
+        this.userId = super(userId);
         this.userName = userName;
         this.password = password;
         this.email = email;
