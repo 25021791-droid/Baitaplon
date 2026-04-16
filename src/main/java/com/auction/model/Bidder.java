@@ -18,12 +18,12 @@ public class Bidder extends User {
     public void displayDashboard() {
         System.out.println("Bidder Dashboard");
     }
-    public boolean placeBid(Item item, double price) {
+    public boolean placeBid(Auction currentprice, double price) {
         if (price > this.balance) {
             System.out.println("Error");
             return false;
         }
-        if (price <= item.getCurrentPrice()) {
+        if (price <= currentprice.getCurrentPrice()) {
             System.out.println("Error");
             return false;
         }
