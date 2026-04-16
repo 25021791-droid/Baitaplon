@@ -16,7 +16,7 @@ public abstract class Item {
     public int getId() {
         return this.id;
     }
-    public String getItem() {
+    public String getName() {
         return this.name;
     }
     public void addBid(Bid newBid) {
