@@ -1,6 +1,6 @@
 package com.auction.model;
 public class Vehicle extends Item {
-    public Vehicle(String item) {
-        super(item);
+    public Vehicle(int id, String item) {
+        super(id, item);
     }
 }
