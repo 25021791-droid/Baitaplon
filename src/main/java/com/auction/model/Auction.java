@@ -9,11 +9,11 @@ public class Auction {
     private double currentPrice;
     private AuctionStatus status;
 
-    public Auction(Item item,double StartingPrice) {
+    public Auction(Item item,double StartPrice) {
         this.item = item;
-        this.currentPrice = StartingPrice;
+        this.currentPrice=StartPrice;
         this.bids = new ArrayList<>();
-        this.status = AuctionStatus.OPEN;
+        this.status=AuctionStatus.OPEN;
     }
     public List<Bid> getBids() { return bids; }
     public double getCurrentPrice() { return currentPrice; }

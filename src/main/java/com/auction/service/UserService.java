@@ -1,2 +1,1 @@
-// registerUser()
-// get user by id
+package com.auction.model;
