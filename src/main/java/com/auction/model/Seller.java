@@ -4,21 +4,31 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Seller extends User {
-    private List<Item> listedItems;
+    private List<Item> myItem;
 
-    public Seller(int id, String username, String password, String email) {
-        super(id, username, password, email);
-        this.listedItems = new ArrayList<>();
+    public Seller(int userId, String username, String password, String email) {
+        super(userId, username, password, email);
+        this.myItem = new ArrayList<>();
     }
 
     public void addItem(Item item) {
-        listedItems.add(item);
+        myItem.add(item);
     }
-
+    public void editItem(Item item) {
+        for (int i = 0; i < myItem.size(); i++) {
+            if (myItem.get(i).getId() == item.getId()) {
+                myItem.set(i, item);
+                System.out.println("Item updated");
+                return;
+            }
+        }
+    }
     public void removeItem(Item item) {
-        listedItems.remove(item);
+        myItem.remove(item);
     }
-
+    public List<Item> getmyItem() {
+        return myItem;
+    }
     @Override
     public void displayDashboard() {
         System.out.println("Seller Dashboard");
