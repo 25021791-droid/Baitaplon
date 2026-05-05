@@ -8,7 +8,7 @@ public class Bidder extends User {
     private List<Bid> bidHistory;
 
     public Bidder(int userid, String userName, String password, String email, double balance) {
-        super(userId, userName, password, email);
+        super(userid, userName, password, email);
         this.balance = balance;
         this.bidHistory = new ArrayList<>();
     }
@@ -18,7 +18,7 @@ public class Bidder extends User {
     public void displayDashboard() {
         System.out.println("Bidder Dashboard");
     }
-    public boolean placeBid(Auction currentPrice, double price) {
+    public boolean placeBid(Auction currentPrice, double price, Item item) {
         if (price > this.balance) {
             System.out.println("Error");
             return false;

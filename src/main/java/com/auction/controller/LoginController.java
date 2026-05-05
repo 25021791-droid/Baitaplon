@@ -34,7 +34,7 @@ public class LoginController {
     private void switchToAuction() {
         try {
             FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/Auction.fxml")
+                    getClass().getResource("/com/auction/Auction.fxml")
             );
 
             Parent root = loader.load();
