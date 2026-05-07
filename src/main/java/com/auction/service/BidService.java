@@ -1,5 +1,6 @@
 package com.auction.service;
 import com.auction.model.*;
+import com.auction.exception.*;
 import java.util.*;
 import com.auction.observer.*;
 import java.util.concurrent.locks.*;
@@ -17,24 +18,23 @@ public class BidService {
             o.update(bid);
         }
     }
-    public boolean placeBid(Auction auction, Bid bid) {
+    public boolean placeBid(Auction auction, Bid bid)
+            throws AuctionClosedException, InvalidBidException {
+
         lock.lock();
+
         try {
-            if (auction.getStatus() != AuctionStatus.OPEN) {
-                System.out.println("Auction not open!");
-                return false;
+            if (auction.getStatus() != AuctionStatus.RUNNING) {
+                throw new AuctionClosedException("Auction is closed. Cannot place bid.");
             }
 
             if (bid.getAmount() <= auction.getCurrentPrice()) {
-                System.out.println("Bid must be higher!");
-                return false;
+                throw new InvalidBidException("Bid must be higher than current price.");
             }
 
             if (bid.getBidder().getBalance() < bid.getAmount()) {
-                System.out.println("Not enough money!");
-                return false;
+                throw new InvalidBidException("Not enough money!");
             }
-
             auction.getBids().add(bid);
             auction.setCurrentPrice(bid.getAmount());
             notifyObservers(bid);
