@@ -1,11 +1,30 @@
 package com.auction.service;
 
+import java.io.InputStream;
 import java.sql.*;
+import java.util.Properties;
 
 public class DatabaseService {
+    private static final Properties properties = new Properties();
+
+    static {
+        try (InputStream input = DatabaseService.class.getClassLoader().getResourceAsStream("application.properties")) {
+            if (input == null) {
+                System.out.println("-- không thấy [application.properties]");
+            } else {
+                properties.load(input);
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
     public static Connection getConnection() throws SQLException {
 
-        String url = "jdbc:mysql://mysql-24ec3754-prject.b.aivencloud.com:23268/defaultdb?useSSL=true&trustServerCertificate=true";
-        return DriverManager.getConnection(url, "avnadmin", "AVNS_MUnq7F2SF5Li4obd6GP");
+        return DriverManager.getConnection(
+                properties.getProperty("db.url"),
+                properties.getProperty("db.user"),
+                properties.getProperty("db.password")
+        );
     }
 }
