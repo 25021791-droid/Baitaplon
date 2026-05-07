@@ -3,14 +3,13 @@ package com.auction.model;
 public abstract class User {
 	private int userId;
 	private String userName;
-	private String password;
-	private String email; 
+	private String email;
+	private String role;
 	private boolean isLoggedIn;
 
-	public User(int userId, String userName, String password, String email) {
+	public User(int userId, String userName, String email, String role) {
 		this.userId = userId;
 		this.userName = userName;
-		this.password = password;
 		this.email = email;
 		this.isLoggedIn = false;
 	}
@@ -21,22 +20,13 @@ public abstract class User {
 	public String getName() {
 		return this.userName;
 	}
-	public boolean checkPass(String inputPass) {
-		if (this.password.equals(inputPass)) {
-		return true;
-		}
-		return false;
-	}
 	public String getEmail() {
 		return this.email;
 	}
-    public boolean login(String inputName, String inputPass) {
-        if ((this.userName.equals(inputName)||this.email.equals(inputName)) && this.checkPass(inputPass)) {
-            this.isLoggedIn = true;
-            return true;
-        }
-        return false;
-    }
+	public String getRole() {
+		return this.role;
+	}
+
     public void logout() {
         if (isLoggedIn) {
             isLoggedIn = false;

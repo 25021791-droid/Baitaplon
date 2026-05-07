@@ -2,8 +2,8 @@ package com.auction.model;
 
 public class Admin extends User {
 
-    public Admin(int userId, String username, String password, String email) {
-        super(userId, username, password, email);
+    public Admin(int userId, String username, String email) {
+        super(userId, username, email, "ADMIN");
     }
 
     public void manageUsers() {

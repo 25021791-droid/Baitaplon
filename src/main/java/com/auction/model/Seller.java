@@ -6,8 +6,8 @@ import java.util.List;
 public class Seller extends User {
     private List<Item> myItems;
 
-    public Seller(int userId, String userName, String password, String email) {
-        super(userId, userName, password, email);
+    public Seller(int userId, String username, String email) {
+        super(userId, username, email, "SELLER");
         this.myItems = new ArrayList<>();
     }
 

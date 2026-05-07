@@ -1,5 +1,7 @@
 package com.auction.controller;
 
+import com.auction.model.User;
+import com.auction.service.UserService;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.fxml.FXMLLoader;
@@ -7,6 +9,7 @@ import javafx.scene.*;
 import javafx.stage.Stage;
 
 public class LoginController {
+    private final UserService userService = new UserService();
 
     @FXML
     private TextField usernameField;
@@ -21,13 +24,13 @@ public class LoginController {
     private void handleLogin() {
         String user = usernameField.getText();
         String pass = passwordField.getText();
+        User loggedUser = userService.login(user, pass);
 
-        if (user.equals("dat") && pass.equals("123")) {
+        if (loggedUser != null) {
             messageLabel.setText("Login success!");
-            System.out.println("Login OK");
             switchToAuction();
         } else {
-            messageLabel.setText("Sai tài khoản!");
+            messageLabel.setText("Sai tài khoản hoặc mật khẩu!");
         }
     }
 

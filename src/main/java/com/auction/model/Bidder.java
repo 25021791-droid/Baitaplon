@@ -7,8 +7,8 @@ public class Bidder extends User {
     private double balance;
     private List<Bid> bidHistory;
 
-    public Bidder(int userid, String userName, String password, String email, double balance) {
-        super(userid, userName, password, email);
+    public Bidder(int userid, String username, String email) {
+        super(userid, username, email, "BIDDER");
         this.balance = balance;
         this.bidHistory = new ArrayList<>();
     }
