@@ -1,5 +1,6 @@
 package com.auction.controller;
-
+import com.auction.service.UserService;
+import com.auction.exception.*;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.fxml.FXMLLoader;
@@ -7,7 +8,7 @@ import javafx.scene.*;
 import javafx.stage.Stage;
 
 public class LoginController {
-
+    private UserService userService = new UserService();
     @FXML
     private TextField usernameField;
 
@@ -22,12 +23,15 @@ public class LoginController {
         String user = usernameField.getText();
         String pass = passwordField.getText();
 
-        if (user.equals("dat") && pass.equals("123")) {
+        try {
+            userService.login(user, pass);
+
             messageLabel.setText("Login success!");
-            System.out.println("Login OK");
+
             switchToAuction();
-        } else {
-            messageLabel.setText("Sai tài khoản!");
+
+        } catch (AuthenticationException e) {
+            messageLabel.setText(e.getMessage());
         }
     }
 
