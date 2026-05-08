@@ -12,6 +12,7 @@ public abstract class User {
 		this.userName = userName;
 		this.email = email;
 		this.isLoggedIn = false;
+		this.role = role;
 	}
 	
 	public int getId() {

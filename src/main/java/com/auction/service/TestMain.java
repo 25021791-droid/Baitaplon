@@ -6,22 +6,29 @@ public class TestMain {
     public static void main(String[] args) {
         UserService userService = new UserService();
 
+        boolean testRegister = false;
+        boolean testLogin = false;
+
         // -- Test Register
-        boolean isRegisterOk = userService.register("dat", "123", "a@gmail.com");
-        if (isRegisterOk) {
-            System.out.println("=> Đăng ký thành công!");
-        } else {
-            System.out.println("=> Đăng ký thất bại");
+        if (testRegister) {
+            boolean isRegisterOk = userService.register("user", "aaa", "test@gmail.com");
+            if (isRegisterOk) {
+                System.out.println("=> Đăng ký thành công!");
+            } else {
+                System.out.println("=> Đăng ký thất bại");
+            }
         }
 
         // -- Test Login
-        User user = userService.login("dat", "124");
+        if (testLogin) {
+            User user = userService.login("user", "aaa");
 
-        if (user != null) {
-            System.out.println("=> Login OK! Chào mừng: " + user.getName());
-            System.out.println("=> Role của bạn là: " + user.getRole());
-        } else {
-            System.out.println("=> Login thất bại! Sai user hoặc pass.");
+            if (user != null) {
+                System.out.println("=> Login OK! Chào mừng: " + user.getName());
+                System.out.println("=> Role của bạn là: " + user.getRole());
+            } else {
+                System.out.println("=> Login thất bại! Sai user hoặc pass.");
+            }
         }
     }
 }

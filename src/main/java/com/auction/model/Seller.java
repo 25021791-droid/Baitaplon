@@ -7,7 +7,7 @@ public class Seller extends User {
     private List<Item> myItems;
 
     public Seller(int userId, String username, String email) {
-        super(userId, username, email, "SELLER");
+        super(userId, username, email, "USER");
         this.myItems = new ArrayList<>();
     }
 
