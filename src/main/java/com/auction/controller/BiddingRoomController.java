@@ -1,4 +1,4 @@
-package controllers;
+package com.auction.controller;
 
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -6,7 +6,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
-import utils.DialogUtils; // Nhập lớp DialogUtils bạn vừa tạo
+import com.auction.utils.DialogUtils;
 
 public class BiddingRoomController {
 
@@ -43,8 +43,6 @@ public class BiddingRoomController {
                 DialogUtils.showWarning("Lỗi đặt giá", "Giá không hợp lệ", "Giá đấu phải cao hơn giá hiện tại!");
                 return;
             }
-
-            // TODO: Báo Người 1 viết API gửi dữ liệu xuống Server ở đây
 
             // Giả lập thành công tạm thời cho UI testing
             DialogUtils.showInfo("Thành công", "Đã gửi yêu cầu đặt giá!");

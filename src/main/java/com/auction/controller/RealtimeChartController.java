@@ -1,4 +1,4 @@
-package controllers;
+package com.auction.controller;
 
 import javafx.application.Platform;
 import javafx.scene.chart.CategoryAxis;
