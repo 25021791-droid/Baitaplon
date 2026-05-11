@@ -1,6 +1,7 @@
-package com.auction.service;
+package main.java.com.auction.service;
 
 import com.auction.model.User;
+import com.auction.service.UserService;
 
 public class TestMain {
     public static void main(String[] args) {
@@ -21,7 +22,7 @@ public class TestMain {
 
         // -- Test Login
         if (testLogin) {
-            User user = userService.login("user", "aaa");
+            User user = UserService.login("user", "aaa");
 
             if (user != null) {
                 System.out.println("=> Login OK! Chào mừng: " + user.getName());

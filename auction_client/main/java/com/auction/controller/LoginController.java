@@ -1,6 +1,5 @@
-package com.auction.controller;
+package main.java.com.auction.controller;
 
-import com.auction.model.User;
 import com.auction.service.UserService;
 import com.auction.utils.UserSession;
 import javafx.fxml.FXML;
@@ -8,6 +7,7 @@ import javafx.scene.control.*;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.*;
 import javafx.stage.Stage;
+import main.java.com.auction.model.User;
 
 public class LoginController {
     private final UserService userService = new UserService();

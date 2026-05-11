@@ -1,4 +1,5 @@
-package com.auction.model;
+package main.java.com.auction.model;
+
 import java.time.LocalDateTime;
 
 public class Bid {

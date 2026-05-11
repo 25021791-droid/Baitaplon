@@ -1,6 +1,5 @@
-package com.auction.controller;
+package main.java.com.auction.controller;
 
-import com.auction.model.User;
 import com.auction.service.UserService;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;

@@ -1,14 +1,10 @@
-module com.auction.baitaplon {
-    requires javafx.controls;
-    requires javafx.fxml;
+module auction_server {
+    requires auction_common;
+
     requires java.sql;
-    requires jbcrypt;
 
-    opens com.auction to javafx.fxml;
-    opens com.auction.controller to javafx.fxml;
-    opens com.auction.utils to javafx.fxml;
+    exports com.auction.network;
+    exports com.auction.service;
 
-    exports com.auction;
-    exports com.auction.controller;
-    exports com.auction.utils;
+    opens main.java.com.auction.observer;
 }

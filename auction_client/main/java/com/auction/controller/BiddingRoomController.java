@@ -1,4 +1,4 @@
-package com.auction.controller;
+package main.java.com.auction.controller;
 
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -7,6 +7,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 import com.auction.utils.DialogUtils;
+import com.auction.controller.RealtimeChartController;
 
 public class BiddingRoomController {
 

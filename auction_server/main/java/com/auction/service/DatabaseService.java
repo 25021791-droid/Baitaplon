@@ -1,4 +1,4 @@
-package com.auction.service;
+package main.java.com.auction.service;
 
 import java.io.InputStream;
 import java.sql.*;

@@ -1,4 +1,5 @@
-package com.auction.model;
+package main.java.com.auction.model;
+
 public abstract class Entity {
     protected String id;
 

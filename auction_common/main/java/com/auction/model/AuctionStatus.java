@@ -1,4 +1,4 @@
-package com.auction.model;
+package main.java.com.auction.model;
 
 public enum AuctionStatus {
     OPEN,
