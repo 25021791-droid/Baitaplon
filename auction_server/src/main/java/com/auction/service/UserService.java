@@ -1,9 +1,6 @@
 package com.auction.service;
 
-import com.auction.model.Admin;
-import com.auction.model.Bidder;
-import com.auction.model.Seller;
-import com.auction.model.User;
+import com.auction.model.*;
 import java.sql.*;
 
 public class UserService {
@@ -26,12 +23,11 @@ public class UserService {
                     int id = rs.getInt("id");
                     String name = rs.getString("username");
                     String email = rs.getString("email");
-                    double balance = rs.getDouble("balance");
 
                     if ("ADMIN".equals(role)) {
                         return new Admin(id, name, email);
                     } else if ("BIDDER".equals(role)) {
-                        return new Bidder(id, name, email, balance);
+                        return new Bidder(id, name, email);
                     } else {
                         return new Seller(id, name, email);
                     }
@@ -47,7 +43,7 @@ public class UserService {
     // Register
     public boolean register(String username, String rawPassword, String email) {
 
-        String sql = "INSERT INTO users (username, password, email, role, balance) VALUES (?, ?, ?, 'BIDDER', 10000.0)";
+        String sql = "INSERT INTO users (username, password, email, role) VALUES (?, ?, ?, 'USER')";
         String hashedPass = PasswordService.hashPassword(rawPassword);
 
         try (Connection conn = DatabaseService.getConnection();
