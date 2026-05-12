@@ -1,9 +1,9 @@
-package main.java.com.auction.service;
+package com.auction.service;
 
-import main.java.com.auction.model.Admin;
-import main.java.com.auction.model.Bidder;
-import main.java.com.auction.model.Seller;
-import main.java.com.auction.model.User;
+import com.auction.model.Admin;
+import com.auction.model.Bidder;
+import com.auction.model.Seller;
+import com.auction.model.User;
 import java.sql.*;
 
 public class UserService {

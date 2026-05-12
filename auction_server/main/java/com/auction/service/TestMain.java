@@ -1,4 +1,4 @@
-package main.java.com.auction.service;
+package com.auction.service;
 
 import com.auction.model.User;
 import com.auction.service.UserService;

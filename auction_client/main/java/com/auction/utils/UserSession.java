@@ -1,6 +1,6 @@
-package main.java.com.auction.utils;
+package com.auction.utils;
 
-import main.java.com.auction.model.User;
+import com.auction.model.User;
 
 public class UserSession {
     private static User currentUser;

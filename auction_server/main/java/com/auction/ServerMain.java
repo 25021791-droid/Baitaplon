@@ -1,6 +1,6 @@
-package main.java.com.auction;
+package com.auction;
 
-import main.java.com.auction.network.AuctionServer;
+import com.auction.network.AuctionServer;
 
 public class ServerMain {
     public static void main(String[] args) {

@@ -1,4 +1,4 @@
-package main.java.com.auction.controller;
+package com.auction.controller;
 
 import com.auction.service.UserService;
 import javafx.fxml.FXML;

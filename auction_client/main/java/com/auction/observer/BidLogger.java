@@ -1,7 +1,7 @@
-package main.java.com.auction.observer;
+package com.auction.observer;
 
-import main.java.com.auction.model.Bid;
-import main.java.com.auction.observer.BidObserver;
+import com.auction.model.Bid;
+import com.auction.observer.BidObserver;
 
 public class BidLogger implements BidObserver {
     @Override

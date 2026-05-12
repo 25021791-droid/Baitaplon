@@ -6,7 +6,9 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="Baitaplon" />
+        <module name="auction_client" />
+        <module name="auction_common" />
+        <module name="auction_server" />
       </profile>
     </annotationProcessing>
   </component>

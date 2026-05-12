@@ -2,7 +2,9 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/Baitaplon.iml" filepath="$PROJECT_DIR$/Baitaplon.iml" />
+      <module fileurl="file://$PROJECT_DIR$/auction_client/auction_client.iml" filepath="$PROJECT_DIR$/auction_client/auction_client.iml" />
+      <module fileurl="file://$PROJECT_DIR$/auction_common/auction_common.iml" filepath="$PROJECT_DIR$/auction_common/auction_common.iml" />
+      <module fileurl="file://$PROJECT_DIR$/auction_server/auction_server.iml" filepath="$PROJECT_DIR$/auction_server/auction_server.iml" />
     </modules>
   </component>
 </project>

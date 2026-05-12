@@ -1,6 +1,6 @@
-package main.java.com.auction.observer;
+package com.auction.observer;
 
-import main.java.com.auction.model.Bid;
+import com.auction.model.Bid;
 
 public interface BidObserver {
     void update(Bid bid);

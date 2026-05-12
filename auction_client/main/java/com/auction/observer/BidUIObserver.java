@@ -1,7 +1,7 @@
-package main.java.com.auction.observer;
+package com.auction.observer;
 
 import javafx.scene.control.Label;
-import main.java.com.auction.model.Bid;
+import com.auction.model.Bid;
 
 public class BidUIObserver implements BidObserver {
 

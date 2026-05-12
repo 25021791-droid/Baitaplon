@@ -1,6 +1,6 @@
-package main.java.com.auction.service;
+package com.auction.service;
 
-import main.java.com.auction.model.*;
+import com.auction.model.*;
 import java.util.*;
 
 public class AuctionService {

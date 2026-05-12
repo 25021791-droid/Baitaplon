@@ -1,7 +1,8 @@
-package main.java.com.auction.service;
-import main.java.com.auction.model.*;
+package com.auction.service;
+
+import com.auction.model.*;
 import java.util.*;
-import main.java.com.auction.observer.*;
+import com.auction.observer.*;
 import java.util.concurrent.locks.*;
 
 public class BidService {

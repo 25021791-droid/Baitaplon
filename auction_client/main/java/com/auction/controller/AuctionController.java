@@ -1,12 +1,14 @@
-package main.java.com.auction.controller;
+package com.auction.controller;
 
-import main.java.com.auction.model.*;
-import com.auction.service.BidService;
+import com.auction.model.*;
 import com.auction.utils.UserSession;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
-import main.java.com.auction.service.AuctionService;
+import com.auction.observer.BidLogger;
+import com.auction.observer.BidUIObserver;
+import com.auction.service.AuctionService;
+import com.auction.service.BidService;
 import java.net.URL;
 import java.util.ResourceBundle;
 
