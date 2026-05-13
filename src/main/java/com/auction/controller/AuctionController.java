@@ -24,8 +24,7 @@ public class AuctionController {
 
     @FXML
     public void initialize() {
-        bidder = new Bidder(1, "dat", "a@gmail.com");
-        bidder.setBalance(1000);
+        bidder = new Bidder(1, "dat", "a@gmail.com", 1000);
         Item item = new Electronics(1, "Laptop");
         auction = new Auction(item,100);
         bidService.addObserver(new BidLogger());
