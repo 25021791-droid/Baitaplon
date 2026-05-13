@@ -6,15 +6,21 @@
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.VBox?>
 
-
-<VBox prefHeight="400.0" prefWidth="600.0"
+<VBox spacing="10" alignment="CENTER" prefHeight="400.0" prefWidth="600.0"
       xmlns="http://javafx.com/javafx/25"
       xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.auction.controller.LoginController">
    <children>
-      <TextField fx:id="usernameField" promptText="ba" />
-      <PasswordField fx:id="passwordField" />
-      <Button mnemonicParsing="false" onAction="#handleLogin" text="Login" />
-      <Label fx:id="messageLabel" text="Label" />
+      <Label text="Login" style="-fx-font-size: 20px; -fx-font-weight: bold;"/>
+
+      <TextField fx:id="usernameField" promptText="UserName" maxWidth="250"/>
+
+      <PasswordField fx:id="passwordField" promptText="PassWord" maxWidth="250"/>
+
+      <Button mnemonicParsing="false" onAction="#handleLogin" text="Login"  maxWidth="100"/>
+
+      <Label fx:id="messageLabel" text="" textFill="red"/>
+
+      <Button onAction="#handleBackToRegister" text="Return to Register" />
    </children>
 </VBox>

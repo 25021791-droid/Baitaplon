@@ -25,7 +25,6 @@ public class RegisterController {
     @FXML
     private Label messageLabel;
 
-    @FXML
     private boolean isValidEmail(String email) {
         String emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}$";
         return email.matches(emailRegex);
@@ -38,11 +37,6 @@ public class RegisterController {
         String pass = passwordField.getText();
         String confirmPass = confirmPasswordField.getText();
 
-        if (!isValidEmail(email)) {
-            messageLabel.setText("Invalid Email!");
-            return;
-        }
-
         if (user.isEmpty() || email.isEmpty() || pass.isEmpty() || confirmPass.isEmpty() ) {
             messageLabel.setText("You have not entered your account or password.");
             return;
@@ -53,13 +47,18 @@ public class RegisterController {
             return;
         }
 
+        if (!isValidEmail(email)) {
+            messageLabel.setText("Invalid Email!");
+            return;
+        }
+
         boolean loggedUser = userService.register(user, pass, email);
 
         if (loggedUser) {
             messageLabel.setText("Register success!");
             switchToAuction();
         } else {
-            messageLabel.setText("Username is already in use.");
+            messageLabel.setText("Username or email is already in use.");
         }
     }
 

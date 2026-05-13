@@ -23,7 +23,7 @@
 
         <Button onAction="#handleRegister" text="Register" maxWidth="100"/>
 
-        <Label fx:id="messageLabel" text="" textFill="RED" />
+        <Label fx:id="messageLabel" text="" textFill="red" />
 
         <Button onAction="#handleBackToLogin" text="Return to Login" />
     </children>

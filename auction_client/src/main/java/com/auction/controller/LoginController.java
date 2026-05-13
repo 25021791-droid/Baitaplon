@@ -7,7 +7,6 @@ import javafx.scene.control.*;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.*;
 import javafx.stage.Stage;
-import com.auction.model.User;
 
 public class LoginController {
     private final UserService userService = new UserService();
@@ -25,18 +24,20 @@ public class LoginController {
     private void handleLogin() {
         String user = usernameField.getText();
         String pass = passwordField.getText();
-        User loggedUser = userService.login(user, pass);
-        if (loggedUser != null) {
-            UserSession.setUser(loggedUser);
-            switchToAuction();
+
+        if (user.isEmpty() || pass.isEmpty()) {
+            messageLabel.setText("You have not entered your account or password.");
+            return;
         }
 
-        if (loggedUser != null) {
+        boolean isSuccess = userService.login(user, pass);
+
+        if (isSuccess) {
             messageLabel.setText("Login success!");
-            UserSession.setUser(loggedUser);
+
             switchToAuction();
         } else {
-            messageLabel.setText("You have not entered your account or password.");
+            messageLabel.setText("Incorrect account or password.");
         }
     }
 
@@ -47,11 +48,28 @@ public class LoginController {
             );
 
             Parent root = loader.load();
-
             Stage stage = (Stage) usernameField.getScene().getWindow();
 
             stage.setScene(new Scene(root));
             stage.setTitle("Auction");
+            stage.show();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @FXML
+    private void handleBackToRegister() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/auction/Register.fxml"));
+            Parent root = loader.load();
+
+            Stage stage = (Stage) usernameField.getScene().getWindow();
+
+            stage.setScene(new Scene(root));
+            stage.setTitle("Register");
+            stage.show();
 
         } catch (Exception e) {
             e.printStackTrace();

@@ -1,34 +1,72 @@
 package com.auction.network;
 
-import java.io.*;
+import com.auction.service.UserService;
+import com.auction.model.User;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.net.Socket;
 
-public class ClientHandler extends Thread {
-    private Socket socket;
+public class ClientHandler implements Runnable {
+    private final Socket clientSocket;
+
+    private final UserService userService = new UserService();
 
     public ClientHandler(Socket socket) {
-        this.socket = socket;
+        this.clientSocket = socket;
     }
 
     @Override
     public void run() {
-        try (InputStream input = socket.getInputStream();
-             BufferedReader reader = new BufferedReader(new InputStreamReader(input));
-             OutputStream output = socket.getOutputStream();
-             PrintWriter writer = new PrintWriter(output, true)) {
+        try (DataInputStream in = new DataInputStream(clientSocket.getInputStream());
+             DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream())) {
 
-            String request;
-            while ((request = reader.readLine()) != null) {
-                System.out.println("Client gửi yêu cầu: " + request);
+            String request = in.readUTF();
+            System.out.println("[Server] Nhận được yêu cầu: " + request);
 
-                if (request.startsWith("LOGIN")) {
-                    writer.println("LOGIN_SUCCESS");
+            String[] parts = request.split(",");
+            String command = parts[0];
+
+            if ("REGISTER".equals(command)) {
+                if (parts.length == 4) {
+                    String username = parts[1];
+                    String password = parts[2];
+                    String email = parts[3];
+
+                    boolean success = userService.register(username, password, email);
+
+                    if (success) {
+                        out.writeUTF("SUCCESS");
+                    } else {
+                        out.writeUTF("FAIL");
+                    }
                 } else {
-                    writer.println("UNKNOWN_COMMAND");
+                    out.writeUTF("FAIL");
                 }
             }
-        } catch (IOException e) {
-            System.out.println("Một Client đã ngắt kết nối.");
+            else if ("LOGIN".equals(command)) {
+                if (parts.length == 3) {
+                    String username = parts[1];
+                    String password = parts[2];
+
+                    User user = userService.login(username, password);
+
+                    if (user != null) {
+                        out.writeUTF("SUCCESS");
+                        // Mẹo nhỏ: Sau này muốn làm xịn hơn, chỗ này bạn có thể gửi chuỗi:
+                        // "SUCCESS," + user.getRole() + "," + user.getId() để Client biết ai đang đăng nhập
+                    } else {
+                        out.writeUTF("FAIL");
+                    }
+                } else {
+                    out.writeUTF("FAIL");
+                }
+            }
+            else {
+                out.writeUTF("UNKNOWN_COMMAND");
+            }
+
+        } catch (Exception e) {
+            System.out.println("[Server] Lỗi kết nối hoặc Client đã ngắt: " + e.getMessage());
         }
     }
 }

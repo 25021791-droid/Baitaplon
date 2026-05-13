@@ -1,64 +1,44 @@
 package com.auction.service;
 
-import com.auction.model.Admin;
-import com.auction.model.Bidder;
-import com.auction.model.Seller;
-import com.auction.model.User;
-import java.sql.*;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.net.Socket;
 
 public class UserService {
+    private static final String SERVER_IP = "localhost";
+    private static final int SERVER_PORT = 8080;
 
-    // Login
-    public static User login(String username, String password) {
-        String query = "SELECT * FROM users WHERE username = ?";
+    public boolean register(String username, String password, String email) {
+        try (Socket socket = new Socket(SERVER_IP, SERVER_PORT);
+             DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+             DataInputStream in = new DataInputStream(socket.getInputStream())) {
 
-        try (Connection conn = DatabaseService.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            String request = "REGISTER," + username + "," + password + "," + email;
+            out.writeUTF(request);
 
-            pstmt.setString(1, username);
-            ResultSet rs = pstmt.executeQuery();
+            String response = in.readUTF();
 
-            if (rs.next()) {
-                String storedHash = rs.getString("password");
-                if (PasswordService.checkPassword(password, storedHash)) {
+            return "SUCCESS".equals(response);
 
-                    String role = rs.getString("role");
-                    int id = rs.getInt("id");
-                    String name = rs.getString("username");
-                    String email = rs.getString("email");
-                    double balance = rs.getDouble("balance");
-
-                    if ("ADMIN".equals(role)) {
-                        return new Admin(id, name, email);
-                    } else if ("BIDDER".equals(role)) {
-                        return new Bidder(id, name, email, balance);
-                    } else {
-                        return new Seller(id, name, email);
-                    }
-                }
-            }
-            return null;
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
-            return null;
+            return false;
         }
     }
 
-    // Register
-    public boolean register(String username, String rawPassword, String email) {
+    public boolean login(String username, String password) {
+        try (Socket socket = new Socket(SERVER_IP, SERVER_PORT);
+             DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+             DataInputStream in = new DataInputStream(socket.getInputStream())) {
 
-        String sql = "INSERT INTO users (username, password, email, role, balance) VALUES (?, ?, ?, 'BIDDER', 10000.0)";
-        String hashedPass = PasswordService.hashPassword(rawPassword);
+            String request = "LOGIN," + username + "," + password;
+            out.writeUTF(request);
 
-        try (Connection conn = DatabaseService.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            String response = in.readUTF();
 
-            pstmt.setString(1, username);
-            pstmt.setString(2, hashedPass);
-            pstmt.setString(3, email);
+            return "SUCCESS".equals(response);
 
-            return pstmt.executeUpdate() > 0;
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             return false;
         }

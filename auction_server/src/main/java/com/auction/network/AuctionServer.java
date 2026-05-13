@@ -12,7 +12,7 @@ public class AuctionServer {
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("Có thiết bị mới kết nối!");
 
-                new ClientHandler(clientSocket).start();
+                new Thread(new ClientHandler(clientSocket)).start();
             }
         } catch (Exception e) {
             e.printStackTrace();
