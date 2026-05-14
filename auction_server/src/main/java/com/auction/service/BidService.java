@@ -1,65 +1,53 @@
 package com.auction.service;
 
-import com.auction.model.*;
-import java.util.*;
-import com.auction.observer.*;
-import java.util.concurrent.locks.*;
+import com.auction.model.Auction;
+import com.auction.model.Bid;
+import com.auction.observer.BidObserver;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 
 public class BidService {
-    private Lock lock = new ReentrantLock();
-    private List<BidObserver> observers = new ArrayList<>();
-    public void addObserver(BidObserver o) {
-        observers.add(o);
+    private static final String SERVER_IP = "localhost";
+    private static final int SERVER_PORT = 8080;
+
+    private final List<BidObserver> observers = new ArrayList<>();
+
+    public void addObserver(BidObserver observer) {
+        observers.add(observer);
     }
-    public void removeObserver(BidObserver o) {
-        observers.remove(o);
-    }
-    private void notifyObservers(Bid bid) {
-        for (BidObserver o : observers) {
-            o.update(bid);
+
+    private void notifyObservers(String message) {
+        for (BidObserver observer : observers) {
+            observer.update(message);
         }
     }
+
     public boolean placeBid(Auction auction, Bid bid) {
-        lock.lock();
-        try {
-            if (auction.getStatus() != AuctionStatus.OPEN) {
-                System.out.println("Auction not open!");
+        try (Socket socket = new Socket(SERVER_IP, SERVER_PORT);
+             DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+             DataInputStream in = new DataInputStream(socket.getInputStream())) {
+
+            String request = "BID," + bid.getBidder().getId() + ","
+                    + auction.getId() + "," + bid.getAmount();
+            out.writeUTF(request);
+
+            String response = in.readUTF();
+
+            if ("SUCCESS".equals(response)) {
+                notifyObservers("Đặt giá thành công: " + bid.getAmount());
+                return true;
+            } else {
+                notifyObservers("Đặt giá thất bại hoặc bị người khác ra giá cao hơn!");
                 return false;
             }
 
-            if (bid.getAmount() <= auction.getCurrentPrice()) {
-                System.out.println("Bid must be higher!");
-                return false;
-            }
-
-            if (bid.getBidder().getBalance() < bid.getAmount()) {
-                System.out.println("Not enough money!");
-                return false;
-            }
-
-            auction.getBids().add(bid);
-            auction.setCurrentPrice(bid.getAmount());
-            notifyObservers(bid);
-
-            return true;
-
-        } finally {
-            lock.unlock();
-        }
-    }
-
-
-    public Bid getWinner(Auction auction) {
-        List<Bid> bids = auction.getBids();
-        if (bids.isEmpty()) return null;
-        return bids.get(bids.size() - 1);
-    }
-
-    public void printBids(Auction auction) {
-        for (Bid b : auction.getBids()) {
-            System.out.println(
-                    b.getBidder().getName() + " : " + b.getAmount()
-            );
+        } catch (Exception e) {
+            e.printStackTrace();
+            notifyObservers("Lỗi kết nối máy chủ!");
+            return false;
         }
     }
 }

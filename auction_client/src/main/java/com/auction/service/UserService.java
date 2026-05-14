@@ -1,5 +1,7 @@
 package com.auction.service;
 
+import com.auction.model.User;
+import com.auction.model.Bidder;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.net.Socket;
@@ -26,7 +28,7 @@ public class UserService {
         }
     }
 
-    public boolean login(String username, String password) {
+    public User login(String username, String password) {
         try (Socket socket = new Socket(SERVER_IP, SERVER_PORT);
              DataOutputStream out = new DataOutputStream(socket.getOutputStream());
              DataInputStream in = new DataInputStream(socket.getInputStream())) {
@@ -35,12 +37,21 @@ public class UserService {
             out.writeUTF(request);
 
             String response = in.readUTF();
+            String[] parts = response.split(",");
 
-            return "SUCCESS".equals(response);
+            if ("SUCCESS".equals(parts[0]) && parts.length >= 5) {
+                int id = Integer.parseInt(parts[1]);
+                String name = parts[2];
+                String email = parts[3];
+                double balance = Double.parseDouble(parts[4]);
+
+                return new Bidder(id, name, email, balance);
+            }
+            return null;
 
         } catch (Exception e) {
             e.printStackTrace();
-            return false;
+            return null;
         }
     }
 }

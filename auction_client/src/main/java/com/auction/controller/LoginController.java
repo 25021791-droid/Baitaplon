@@ -22,7 +22,7 @@ public class LoginController {
 
     @FXML
     private void handleLogin() {
-        String user = usernameField.getText();
+        String user = usernameField.getText().trim();
         String pass = passwordField.getText();
 
         if (user.isEmpty() || pass.isEmpty()) {
@@ -30,10 +30,12 @@ public class LoginController {
             return;
         }
 
-        boolean isSuccess = userService.login(user, pass);
+        com.auction.model.User isSuccess = userService.login(user, pass);
 
-        if (isSuccess) {
+        if (isSuccess != null) {
             messageLabel.setText("Login success!");
+
+            UserSession.setUser(isSuccess);
 
             switchToAuction();
         } else {

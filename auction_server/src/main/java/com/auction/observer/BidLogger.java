@@ -4,7 +4,7 @@ import com.auction.model.Bid;
 
 public class BidLogger implements BidObserver {
     @Override
-    public void update(Bid bid) {
-        System.out.println("New bid: " + bid.getAmount());
+    public void update(String message) {
+        System.out.println(message);
     }
 }
