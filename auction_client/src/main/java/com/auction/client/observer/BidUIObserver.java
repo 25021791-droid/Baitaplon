@@ -13,7 +13,7 @@ public class BidUIObserver implements BidObserver {
     }
 
     @Override
-    public void update(Bid bid) {
-        label.setText("Latest bid: " + bid.getAmount());
+    public void update(String message) {
+        label.setText(message);
     }
 }

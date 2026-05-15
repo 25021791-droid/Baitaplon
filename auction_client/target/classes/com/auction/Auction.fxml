@@ -15,8 +15,6 @@
             <children>
                 <Label fx:id="lblUsername" text="User: ..." textFill="WHITE" style="-fx-font-weight: bold;" GridPane.columnIndex="0" />
 
-                <Label fx:id="lblBalance" text="Balance: 10000.0 $" textFill="#2ecc71" style="-fx-font-weight: bold; -fx-font-size: 14px;" GridPane.columnIndex="1" />
-
                 <Button text="Logout" onAction="#handleBackToLogin" style="-fx-background-color: #e74c3c; -fx-text-fill: white;" GridPane.columnIndex="2" />
             </children>
         </GridPane>

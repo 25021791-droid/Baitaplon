@@ -1,11 +1,15 @@
 package com.auction.client.controller;
 
 import com.auction.client.service.ClientService;
+import com.auction.common.model.User;
+import com.auction.service.UserService;
+import com.auction.client.utils.UserSession;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.*;
 import javafx.stage.Stage;
+import java.io.IOException;
 
 public class LoginController {
 
@@ -19,8 +23,20 @@ public class LoginController {
     private Label messageLabel;
 
     @FXML
+    private RadioButton bidderRadio;
+
+    @FXML
+    private RadioButton sellerRadio;
+
+    @FXML
+    private RadioButton adminRadio;
+
+    @FXML
+    private ToggleGroup roleGroup;
+
+    @FXML
     private void handleLogin() {
-        String user = usernameField.getText();
+        String user = usernameField.getText().trim();
         String pass = passwordField.getText();
 
         if (user.isEmpty() || pass.isEmpty()) {
@@ -28,13 +44,52 @@ public class LoginController {
             return;
         }
 
-        boolean loginOk = ClientService.getInstance().login(user, pass);
+        String selectedRole;
+        if (adminRadio.isSelected()) {
+            selectedRole = "ADMIN";
+        } else if (sellerRadio.isSelected()) {
+            selectedRole = "SELLER";
+        } else {
+            selectedRole = "BIDDER";
+        }
 
-        if (loginOk) {
+        boolean isSuccess = ClientService.getInstance().login(user, pass);
+
+        if (isSuccess != null) {
             messageLabel.setText("Login success!");
-            switchToAuction();
+
+            UserSession.setUser(isSuccess);
+
+            switch (selectedRole) {
+                case "ADMIN":
+                    switchScene("/com/auction/Admin.fxml", "ADMIN");
+                    break;
+                case "SELLER":
+                    switchScene("/com/auction/Seller.fxml", "SELLER");
+                    break;
+                case "BIDDER":
+                default:
+                    switchScene("/com/auction/Auction.fxml", "BIDDER");
+                    break;
+            }
         } else {
             messageLabel.setText("Incorrect account or password.");
+        }
+    }
+
+    private void switchScene(String fxmlPath, String title) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
+            Parent root = loader.load();
+
+            Stage stage = (Stage) usernameField.getScene().getWindow();
+            stage.setScene(new Scene(root));
+            stage.setTitle(title);
+            stage.show();
+
+        } catch (IOException e) {
+            System.err.println("Lỗi khi load giao diện: " + fxmlPath);
+            e.printStackTrace();
         }
     }
 

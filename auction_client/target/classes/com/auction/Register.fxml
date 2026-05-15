@@ -4,12 +4,20 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.RadioButton?>
+<?import javafx.scene.control.ToggleGroup?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.HBox?>
 
 <VBox spacing="10" alignment="CENTER" prefHeight="400.0" prefWidth="600.0"
       xmlns="http://javafx.com/javafx/25"
       xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.auction.client.controller.RegisterController">
+
+    <fx:define>
+        <ToggleGroup fx:id="roleGroup"/>
+    </fx:define>
+
     <children>
         <Label text="Register" style="-fx-font-size: 20px; -fx-font-weight: bold;"/>
 
@@ -20,6 +28,13 @@
         <PasswordField fx:id="confirmPasswordField" promptText="ConfirmPassword" maxWidth="250"/>
 
         <TextField fx:id="emailField" promptText="Email (ví dụ: abc@gmail.com)" maxWidth="250"/>
+
+        <HBox spacing="20" alignment="CENTER">
+            <children>
+                <RadioButton fx:id="bidderRadio" text="Bidder" toggleGroup="$roleGroup" selected="true" />
+                <RadioButton fx:id="sellerRadio" text="Seller" toggleGroup="$roleGroup" />
+            </children>
+        </HBox>
 
         <Button onAction="#handleRegister" text="Register" maxWidth="100"/>
 

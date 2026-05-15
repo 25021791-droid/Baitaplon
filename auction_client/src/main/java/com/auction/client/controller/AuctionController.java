@@ -17,7 +17,6 @@ public class AuctionController implements Initializable {
     @FXML private TextField bidField;
     @FXML private Label resultLabel;
     @FXML private Label lblUsername;
-    @FXML private Label lblBalance;
 
     private Bidder bidder;
     private Auction auction;
@@ -30,12 +29,10 @@ public class AuctionController implements Initializable {
             lblUsername.setText("User: " + user.getName());
             if (user instanceof Bidder) {
                 this.bidder = (Bidder) user;
-                lblBalance.setText("Balance: " + bidder.getBalance());
             }
         } else {
             this.bidder = new Bidder(1, "dat", "a@gmail.com", 1000.0);
             lblUsername.setText("User: " + bidder.getName());
-            lblBalance.setText("Balance: " + bidder.getBalance());
         }
 
         Item item = new Electronics(1, "Laptop");
