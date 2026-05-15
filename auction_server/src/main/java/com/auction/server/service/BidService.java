@@ -1,7 +1,7 @@
 package com.auction.server.service;
 
 import com.auction.common.model.Auction;
-import com.auction.common.model.AuctionStatus;
+import com.auction.common.model.User;
 import com.auction.common.model.Bid;
 
 import com.auction.common.observer.BidObserver;
@@ -53,5 +53,10 @@ public class BidService {
             notifyObservers("Lỗi kết nối máy chủ!");
             return false;
         }
+    }
+
+    public Bid getWinner(Auction auction) {
+        return null;
+        // FILLER CODE. nhớ code cái này
     }
 }

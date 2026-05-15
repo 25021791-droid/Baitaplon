@@ -44,20 +44,21 @@ public class ClientService {
             if (response != null && response.startsWith("LOGIN_SUCCESS|")) {
                 String[] parts = response.split("\\|");
 
-                // Trích xuất dữ liệu (format: LOGIN_SUCCESS|ID|Name|Balance|Role)
+                // Trích xuất dữ liệu (format: LOGIN_SUCCESS|ID|Name|Email|Balance|Role)
                 int id = Integer.parseInt(parts[1]);
                 String name = parts[2];
-                double balance = Double.parseDouble(parts[3]);
-                String role = parts[4];
+                String email = parts[3];
+                double balance = Double.parseDouble(parts[4]);
+                String role = parts[5];
 
                 // Tạo User
                 User user;
                 if (role.equals("ADMIN")) {
-                    user = new Admin(id, name, balance);
+                    user = new Admin(id, name, email);
                 } else if (role.equals("SELLER")) {
-                    user = new Seller(id, name, balance);
+                    user = new Seller(id, name, email);
                 } else {
-                    user = new Bidder(id, name, balance);
+                    user = new Bidder(id, name, email);
                 }
 
                 return user;
