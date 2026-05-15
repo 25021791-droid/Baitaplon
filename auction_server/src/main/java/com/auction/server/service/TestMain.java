@@ -11,7 +11,7 @@ public class TestMain {
 
         // -- Test Register
         if (testRegister) {
-            boolean isRegisterOk = userService.register("user", "aaa", "test@gmail.com");
+            boolean isRegisterOk = userService.register("user", "aaa", "test@gmail.com", "USER");
             if (isRegisterOk) {
                 System.out.println("=> Đăng ký thành công!");
             } else {

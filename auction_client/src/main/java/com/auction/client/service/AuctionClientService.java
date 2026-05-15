@@ -27,7 +27,7 @@ public class AuctionClientService {
         return instance;
     }
 
-    public boolean placeBid(int auctionId, int userId, double amount) {
+    public boolean placeBid(long auctionId, int userId, double amount) {
 
         try {
             String message = String.format("BID|%d|%d|%.2f", auctionId, userId, amount);

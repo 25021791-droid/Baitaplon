@@ -2,7 +2,6 @@ package com.auction.client.controller;
 
 import com.auction.client.service.ClientService;
 import com.auction.common.model.User;
-import com.auction.service.UserService;
 import com.auction.client.utils.UserSession;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
@@ -53,12 +52,12 @@ public class LoginController {
             selectedRole = "BIDDER";
         }
 
-        boolean isSuccess = ClientService.getInstance().login(user, pass);
+        User loggedInUser = ClientService.getInstance().login(user, pass);
 
-        if (isSuccess != null) {
+        if (loggedInUser != null) {
             messageLabel.setText("Login success!");
 
-            UserSession.setUser(isSuccess);
+            UserSession.setUser(loggedInUser);
 
             switch (selectedRole) {
                 case "ADMIN":

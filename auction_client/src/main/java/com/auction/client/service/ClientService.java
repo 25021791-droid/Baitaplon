@@ -5,9 +5,13 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import com.auction.common.model.User;
+import com.auction.common.model.Bidder;
+import com.auction.common.model.Seller;
+import com.auction.common.model.Admin;
 
 /*
- * A class for sending messages from Client to Server(Socket)
+ * class để gửi/nhận thông tin user với Server
  */
 public class ClientService {
     private static ClientService instance;
@@ -30,16 +34,38 @@ public class ClientService {
         return instance;
     }
 
-    public boolean login(String username, String password) {
+    public User login(String username, String password) {
         String message = "LOGIN|" + username + "|" + password;
         out.println(message);
 
         try {
-            String response = in.readLine();
-            return "LOGIN_SUCCESS".equals(response);
+            String response = in.readLine(); // Đọc phản hồi từ Server
+
+            if (response != null && response.startsWith("LOGIN_SUCCESS|")) {
+                String[] parts = response.split("\\|");
+
+                // Trích xuất dữ liệu (format: LOGIN_SUCCESS|ID|Name|Balance|Role)
+                int id = Integer.parseInt(parts[1]);
+                String name = parts[2];
+                double balance = Double.parseDouble(parts[3]);
+                String role = parts[4];
+
+                // Tạo User
+                User user;
+                if (role.equals("ADMIN")) {
+                    user = new Admin(id, name, balance);
+                } else if (role.equals("SELLER")) {
+                    user = new Seller(id, name, balance);
+                } else {
+                    user = new Bidder(id, name, balance);
+                }
+
+                return user;
+            }
         } catch (IOException e) {
-            return false;
+            e.printStackTrace();
         }
+        return null;
     }
 
     public boolean register(String username, String email, String password) {

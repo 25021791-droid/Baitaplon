@@ -55,7 +55,7 @@ public class AuctionController implements Initializable {
             boolean sendOk = AuctionClientService.getInstance().placeBid(auction.getId(), bidder.getId(), amount);
 
             if (sendOk) {
-                lblBalance.setText("Balance: " + bidder.getBalance());
+                resultLabel.setText("Bid placed successfully...");
             } else {
                 resultLabel.setText("Bid failed!");
             }
