@@ -27,12 +27,13 @@ public class ClientHandler implements Runnable {
             String command = parts[0];
 
             if ("REGISTER".equals(command)) {
-                if (parts.length == 4) {
+                if (parts.length == 5) {
                     String username = parts[1];
                     String password = parts[2];
                     String email = parts[3];
+                    String role = parts[4];
 
-                    boolean success = userService.register(username, password, email);
+                    boolean success = userService.register(username, password, email, role);
 
                     if (success) {
                         out.writeUTF("SUCCESS");
@@ -52,8 +53,6 @@ public class ClientHandler implements Runnable {
 
                     if (user != null) {
                         out.writeUTF("SUCCESS");
-                        // Mẹo nhỏ: Sau này muốn làm xịn hơn, chỗ này bạn có thể gửi chuỗi:
-                        // "SUCCESS," + user.getRole() + "," + user.getId() để Client biết ai đang đăng nhập
                     } else {
                         out.writeUTF("FAIL");
                     }

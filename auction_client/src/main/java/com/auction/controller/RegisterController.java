@@ -23,6 +23,12 @@ public class RegisterController {
     private PasswordField confirmPasswordField;
 
     @FXML
+    private RadioButton bidderRadio;
+
+    @FXML
+    private RadioButton sellerRadio;
+
+    @FXML
     private Label messageLabel;
 
     private boolean isValidEmail(String email) {
@@ -42,6 +48,8 @@ public class RegisterController {
             return;
         }
 
+        String role = bidderRadio.isSelected() ? "BIDDER" : "SELLER";
+
         if (!pass.equals(confirmPass)) {
             messageLabel.setText("Password does not match.");
             return;
@@ -52,12 +60,14 @@ public class RegisterController {
             return;
         }
 
-        boolean loggedUser = userService.register(user, pass, email);
+        boolean loggedUser = userService.register(user, pass, email, role);
 
         if (loggedUser) {
-            messageLabel.setText("Register success!");
-            switchToAuction();
+            messageLabel.setStyle("-fx-text-fill: green;");
+            messageLabel.setText("Register success! Please login.");
+            handleBackToLogin();
         } else {
+            messageLabel.setStyle("-fx-text-fill: red;");
             messageLabel.setText("Username or email is already in use.");
         }
     }

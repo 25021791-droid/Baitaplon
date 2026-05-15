@@ -7,9 +7,7 @@ import com.auction.model.User;
 import java.sql.*;
 
 public class UserService {
-
-    // Login
-    public static User login(String username, String password) {
+    public User login(String username, String password) {
         String query = "SELECT * FROM users WHERE username = ?";
 
         try (Connection conn = DatabaseService.getConnection();
@@ -44,10 +42,9 @@ public class UserService {
         }
     }
 
-    // Register
-    public boolean register(String username, String rawPassword, String email) {
+    public boolean register(String username, String rawPassword, String email, String role) {
+        String sql = "INSERT INTO users (username, password, email, role, balance) VALUES (?, ?, ?, ?, 10000.0)";
 
-        String sql = "INSERT INTO users (username, password, email, role, balance) VALUES (?, ?, ?, 'BIDDER', 10000.0)";
         String hashedPass = PasswordService.hashPassword(rawPassword);
 
         try (Connection conn = DatabaseService.getConnection();
@@ -56,6 +53,7 @@ public class UserService {
             pstmt.setString(1, username);
             pstmt.setString(2, hashedPass);
             pstmt.setString(3, email);
+            pstmt.setString(4, role); // Set giá trị cho role (BIDDER hoặc SELLER)
 
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
