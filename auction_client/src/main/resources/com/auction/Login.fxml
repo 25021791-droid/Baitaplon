@@ -9,7 +9,7 @@
 <VBox spacing="10" alignment="CENTER" prefHeight="400.0" prefWidth="600.0"
       xmlns="http://javafx.com/javafx/25"
       xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.auction.controller.LoginController">
+      fx:controller="com.auction.client.controller.LoginController">
    <children>
       <Label text="Login" style="-fx-font-size: 20px; -fx-font-weight: bold;"/>
 
