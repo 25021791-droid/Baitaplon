@@ -1,9 +1,6 @@
 package com.auction.client.service;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.Socket;
 import com.auction.common.model.User;
 import com.auction.common.model.Bidder;
@@ -16,14 +13,14 @@ import com.auction.common.model.Admin;
 public class ClientService {
     private static ClientService instance;
     private Socket socket;
-    private PrintWriter out;
-    private BufferedReader in;
+    private DataOutputStream out;
+    private DataInputStream in;
 
     private ClientService() {
         try {
             this.socket = new Socket("localhost", 8080);
-            this.out = new PrintWriter(socket.getOutputStream(), true);
-            this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            this.out = new DataOutputStream(socket.getOutputStream());
+            this.in = new DataInputStream(socket.getInputStream());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -35,11 +32,12 @@ public class ClientService {
     }
 
     public User login(String username, String password) {
-        String message = "LOGIN|" + username + "|" + password;
-        out.println(message);
 
         try {
-            String response = in.readLine(); // Đọc phản hồi từ Server
+            String cmd = String.format("LOGIN|%s|%s", username, password);
+            out.writeUTF(cmd);
+
+            String response = in.readUTF(); // Đọc phản hồi từ Server
 
             if (response != null && response.startsWith("LOGIN_SUCCESS|")) {
                 String[] parts = response.split("\\|");
@@ -70,11 +68,12 @@ public class ClientService {
     }
 
     public boolean register(String username, String email, String password) {
-        String cmd = String.format("REGISTER|%s|%s|%s", username, email, password);
-        out.println(cmd);
 
         try {
-            String response = in.readLine();
+            String cmd = String.format("REGISTER|%s|%s|%s", username, email, password);
+            out.writeUTF(cmd);
+
+            String response = in.readUTF();
             return "REGISTER_SUCCESS".equals(response);
         } catch (IOException e) {
             e.printStackTrace();

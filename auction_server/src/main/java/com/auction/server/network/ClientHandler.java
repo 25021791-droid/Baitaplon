@@ -23,7 +23,7 @@ public class ClientHandler implements Runnable {
             String request = in.readUTF();
             System.out.println("[Server] Nhận được yêu cầu: " + request);
 
-            String[] parts = request.split(",");
+            String[] parts = request.split("\\|");
             String command = parts[0];
 
             if ("REGISTER".equals(command)) {
