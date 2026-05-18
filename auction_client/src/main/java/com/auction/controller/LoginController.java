@@ -23,18 +23,6 @@ public class LoginController {
     private Label messageLabel;
 
     @FXML
-    private RadioButton bidderRadio;
-
-    @FXML
-    private RadioButton sellerRadio;
-
-    @FXML
-    private RadioButton adminRadio;
-    
-    @FXML
-    private ToggleGroup roleGroup;
-
-    @FXML
     private void handleLogin() {
         String user = usernameField.getText().trim();
         String pass = passwordField.getText();
@@ -60,18 +48,6 @@ public class LoginController {
 
             UserSession.setUser(isSuccess);
 
-            switch (selectedRole) {
-                case "ADMIN":
-                    switchScene("/com/auction/Admin.fxml", "ADMIN");
-                    break;
-                case "SELLER":
-                    switchScene("/com/auction/Seller.fxml", "SELLER");
-                    break;
-                case "BIDDER":
-                default:
-                    switchScene("/com/auction/Auction.fxml", "BIDDER");
-                    break;
-            }
         } else {
             messageLabel.setText("Incorrect account or password.");
         }

@@ -60,7 +60,7 @@ public class RegisterController {
             return;
         }
 
-        boolean loggedUser = userService.register(user, pass, email, role);
+        boolean loggedUser = userService.register(user, pass, email);
 
         if (loggedUser) {
             messageLabel.setStyle("-fx-text-fill: green;");

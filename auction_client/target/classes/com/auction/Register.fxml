@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import java.lang.String?>
+<?import javafx.collections.FXCollections?>
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.PasswordField?>
@@ -9,37 +12,78 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.layout.HBox?>
 
-<VBox spacing="10" alignment="CENTER" prefHeight="400.0" prefWidth="600.0"
-      xmlns="http://javafx.com/javafx/25"
+<VBox alignment="CENTER" prefHeight="650.0" prefWidth="500.0" spacing="0"
+      style="-fx-background-color: #99cde6;"
+      xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.auction.controller.RegisterController">
+      fx:controller="com.auction.controller.RegisterController"
+      stylesheets="@style.css">
 
     <fx:define>
         <ToggleGroup fx:id="roleGroup"/>
     </fx:define>
 
     <children>
-        <Label text="Register" style="-fx-font-size: 20px; -fx-font-weight: bold;"/>
-
-        <TextField fx:id="usernameField" promptText="UserName" maxWidth="250"/>
-
-        <PasswordField fx:id="passwordField" promptText="Password" maxWidth="250"/>
-
-        <PasswordField fx:id="confirmPasswordField" promptText="ConfirmPassword" maxWidth="250"/>
-
-        <TextField fx:id="emailField" promptText="Email (ví dụ: abc@gmail.com)" maxWidth="250"/>
-
-        <HBox spacing="20" alignment="CENTER">
+        <VBox alignment="TOP_LEFT" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="580.0" prefWidth="440.0" spacing="20.0" style="-fx-background-color: #ffffff; -fx-background-radius: 10px; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 5);">
             <children>
-                <RadioButton fx:id="bidderRadio" text="Bidder" toggleGroup="$roleGroup" selected="true" />
-                <RadioButton fx:id="sellerRadio" text="Seller" toggleGroup="$roleGroup" />
+                <VBox alignment="TOP_CENTER" spacing="10.0">
+                    <children>
+                        <Label text="REGISTER" style="-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #000000;" />
+                    </children>
+                </VBox>
+
+                <VBox spacing="8.0">
+                    <children>
+                        <Label text="Username" style="-fx-font-size: 14px; -fx-text-fill: #000000;" />
+                        <TextField fx:id="usernameField" promptText="name" styleClass="input-field" />
+                    </children>
+                </VBox>
+
+                <VBox spacing="8.0">
+                    <children>
+                        <Label text="Password" style="-fx-font-size: 14px; -fx-text-fill: #000000;" />
+                        <PasswordField fx:id="passwordField" promptText="pass" styleClass="input-field" />
+                    </children>
+                </VBox>
+
+                <VBox spacing="8.0">
+                    <children>
+                        <Label text="ConfirmPassword" style="-fx-font-size: 14px; -fx-text-fill: #000000;" />
+                        <PasswordField fx:id="confirmPasswordField" promptText="confirmpass" styleClass="input-field" />
+                    </children>
+                </VBox>
+
+                <VBox spacing="8.0">
+                    <children>
+                        <Label text="Email" style="-fx-font-size: 14px; -fx-text-fill: #000000;" />
+                        <TextField fx:id="emailField" promptText="you@example.com" styleClass="input-field" />
+                    </children>
+                </VBox>
+
+                <HBox spacing="20" alignment="CENTER">
+                    <children>
+                        <RadioButton fx:id="bidderRadio" text="Bidder" toggleGroup="$roleGroup" selected="true" />
+                        <RadioButton fx:id="sellerRadio" text="Seller" toggleGroup="$roleGroup" />
+                    </children>
+                </HBox>
+
+                <Button fx:id="registerButton" onAction="#handleRegister" text="REGISTER" maxWidth="1.7976931348623157E308" styleClass="register-button" style="-fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-font-size: 14px; -fx-border-color: #3b82f6; -fx-background-color: #3b82f6" />
+
+                <Label fx:id="messageLabel" text="" textFill="red" visible="false" />
+
+                <HBox alignment="CENTER" spacing="5.0">
+                    <children>
+                        <Label text="Do you already have an account?" style="-fx-font-size: 14px; -fx-text-fill: #6b7280;" />
+                        <Button onAction="#handleBackToLogin" text="Login" style="-fx-background-color: transparent; -fx-padding: 0; -fx-text-fill: #3b82f6; -fx-font-weight: bold; -fx-font-size: 14px; -fx-cursor: hand;" />
+                    </children>
+                    <padding>
+                        <Insets top="10.0" />
+                    </padding>
+                </HBox>
             </children>
-        </HBox>
-
-        <Button onAction="#handleRegister" text="Register" maxWidth="100"/>
-
-        <Label fx:id="messageLabel" text="" textFill="red" />
-
-        <Button onAction="#handleBackToLogin" text="Return to Login" />
+            <padding>
+                <Insets bottom="40.0" left="40.0" right="40.0" top="40.0" />
+            </padding>
+        </VBox>
     </children>
 </VBox>
