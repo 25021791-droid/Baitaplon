@@ -5,6 +5,8 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.RadioButton?>
+<?import javafx.scene.control.ToggleGroup?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.layout.HBox?>
 
@@ -12,8 +14,12 @@
       style="-fx-background-color: #99cde6;"
       xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.auction.controller.LoginController"
+      fx:controller="com.auction.client.controller.LoginController"
       stylesheets="@style.css">
+
+   <fx:define>
+      <ToggleGroup fx:id="roleGroup"/>
+   </fx:define>
 
    <children>
       <VBox alignment="TOP_LEFT" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="580.0" prefWidth="440.0" spacing="20.0" style="-fx-background-color: #ffffff; -fx-background-radius: 10px; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 5);">
@@ -37,6 +43,14 @@
                   <PasswordField fx:id="passwordField" promptText="pass" styleClass="input-field" />
                </children>
             </VBox>
+
+            <HBox spacing="20" alignment="CENTER">
+               <children>
+                  <RadioButton fx:id="bidderRadio" text="Bidder" toggleGroup="$roleGroup" selected="true" />
+                  <RadioButton fx:id="sellerRadio" text="Seller" toggleGroup="$roleGroup" />
+                  <RadioButton fx:id="adminRadio" text="Admin" toggleGroup="$roleGroup" />
+               </children>
+            </HBox>
 
             <Button fx:id="loginButton" onAction="#handleLogin" text="LOGIN" maxWidth="1.7976931348623157E308" styleClass="login-button" style="-fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-font-size: 14px; -fx-border-color: #3b82f6; -fx-background-color: #3b82f6" />
 
