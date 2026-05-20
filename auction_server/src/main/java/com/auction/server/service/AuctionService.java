@@ -4,11 +4,30 @@ import com.auction.common.model.Auction;
 import com.auction.common.model.AuctionStatus;
 import com.auction.common.model.Bid;
 import com.auction.common.model.Bidder;
+import java.util.ArrayList;
+import java.util.List;
 
 public class AuctionService {
 
+    private static final List<Auction> auctionList = new ArrayList<>();
+
     private final BidService bidService = new BidService();
     private final UserService userService = new UserService();
+
+    public synchronized List<Auction> getActiveAuctions() {
+        List<Auction> activeAuctions = new ArrayList<>();
+        for (Auction auction : auctionList) {
+            if (auction.getStatus() == AuctionStatus.RUNNING) {
+                activeAuctions.add(auction);
+            }
+        }
+        return activeAuctions;
+    }
+
+    public synchronized void addAuction(Auction auction) {
+        auctionList.add(auction);
+        System.out.println("Đã thêm phiên đấu giá mới vào hệ thống hệ thống!");
+    }
 
     public synchronized boolean startAuction(Auction auction) {
         if (auction.getStatus() != AuctionStatus.OPEN) {

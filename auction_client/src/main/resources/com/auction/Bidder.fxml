@@ -1,38 +1,148 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
 
-<BorderPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.controller.BidderController">
+<BorderPane prefHeight="750.0" prefWidth="1100.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.controller.BidderController">
 
     <top>
-        <GridPane style="-fx-background-color: #2c3e50; -fx-padding: 10;">
-            <columnConstraints>
-                <ColumnConstraints percentWidth="33.3" halignment="LEFT" />
-                <ColumnConstraints percentWidth="33.4" halignment="CENTER" />
-                <ColumnConstraints percentWidth="33.3" halignment="RIGHT" />
-            </columnConstraints>
+        <HBox alignment="CENTER_LEFT" prefHeight="65.0" style="-fx-background-color: #2c3e50; -fx-padding: 0 20 0 20;">
             <children>
-                <Label fx:id="lblUsername" text="User: ..." textFill="WHITE" style="-fx-font-weight: bold;" GridPane.columnIndex="0" />
+                <Label text="SÀN ĐẤU GIÁ TRỰC TUYẾN" textFill="WHITE">
+                    <font>
+                        <Font name="System Bold" size="20.0" />
+                    </font>
+                </Label>
+                <HBox HBox.hgrow="ALWAYS" />
 
-                <Button text="Logout" onAction="#handleBackToLogin" style="-fx-background-color: #e74c3c; -fx-text-fill: white;" GridPane.columnIndex="2" />
+                <VBox alignment="CENTER_RIGHT" spacing="3.0">
+                    <children>
+                        <Label fx:id="lblUsername" text="User: Chưa đăng nhập" textFill="WHITE">
+                            <font>
+                                <Font name="System Bold" size="14.0" />
+                            </font>
+                        </Label>
+                        <HBox alignment="CENTER_RIGHT" spacing="5.0">
+                            <children>
+                                <Label text="Ví tiền:" textFill="#bdc3c7" />
+                                <Label fx:id="lblBalance" text="0.00" textFill="#2ecc71">
+                                    <font>
+                                        <Font name="System Bold" size="14.0" />
+                                    </font>
+                                </Label>
+                            </children>
+                        </HBox>
+                    </children>
+                    <HBox.margin>
+                        <Insets right="20.0" />
+                    </HBox.margin>
+                </VBox>
+                <Button mnemonicParsing="false" onAction="#handleBackToLogin" style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-weight: bold;" text="Đăng Xuất" />
             </children>
-        </GridPane>
+        </HBox>
     </top>
 
     <center>
-        <VBox alignment="CENTER" spacing="20.0" BorderPane.alignment="CENTER">
-            <children>
-                <Label text="AUCTION SCREEN" style="-fx-font-size: 20px; -fx-font-weight: bold;" />
+        <SplitPane dividerPositions="0.65" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+            <items>
 
-                <HBox alignment="CENTER" spacing="10">
-                    <TextField fx:id="bidField" promptText="Nhập giá tiền..." />
-                    <Button onAction="#handleBid" text="Place Bid" style="-fx-background-color: #3498db; -fx-text-fill: white;" />
-                </HBox>
+                <VBox spacing="15.0" style="-fx-padding: 15;">
+                    <children>
+                        <Label text="Các phiên đấu giá ĐANG CHẠY:">
+                            <font>
+                                <Font name="System Bold" size="15.0" />
+                            </font>
+                        </Label>
+                        <ScrollPane fitToWidth="true" prefHeight="280.0" style="-fx-background-color: transparent;" VBox.vgrow="ALWAYS">
+                            <content>
+                                <FlowPane fx:id="flowActiveAuctions" hgap="15.0" vgap="15.0" />
+                            </content>
+                        </ScrollPane>
 
-                <Label fx:id="resultLabel" text="..." />
-            </children>
-        </VBox>
+                        <Label text="Các phiên đấu giá ĐÃ KẾT THÚC:">
+                            <font>
+                                <Font name="System Bold" size="15.0" />
+                            </font>
+                        </Label>
+                        <ScrollPane fitToWidth="true" prefHeight="220.0" style="-fx-background-color: transparent;" VBox.vgrow="ALWAYS">
+                            <content>
+                                <FlowPane fx:id="flowEndedAuctions" hgap="15.0" vgap="15.0">
+                                    <children>
+                                        <Label fx:id="lblNoEnded" text="Chưa có phiên nào kết thúc." textFill="#7f8c8d" />
+                                    </children></FlowPane>
+                            </content>
+                        </ScrollPane>
+                    </children>
+                </VBox>
+
+                <ScrollPane fitToWidth="true" style="-fx-padding: 15;">
+                    <content>
+                        <VBox spacing="12.0">
+                            <children>
+                                <Label text="Chi Tiết Vật Phẩm">
+                                    <font>
+                                        <Font name="System Bold" size="16.0" />
+                                    </font>
+                                </Label>
+
+                                <ImageView fx:id="itemImageView" fitHeight="150.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true" style="-fx-alignment: center;" />
+
+                                <Label fx:id="lblItemDescription" text="Mô tả: Chọn một sản phẩm để xem chi tiết." wrapText="true" />
+
+                                <Label fx:id="lblCurrentPrice" text="Giá hiện tại: $0.0" textFill="#e67e22">
+                                    <font>
+                                        <Font name="System Bold" size="14.0" />
+                                    </font>
+                                </Label>
+
+                                <Label fx:id="lblTimeLeft" text="Thời gian còn lại: --:--" textFill="#c0392b">
+                                    <font>
+                                        <Font name="System Bold" size="14.0" />
+                                    </font>
+                                </Label>
+
+                                <HBox alignment="CENTER_LEFT" spacing="10.0" style="-fx-padding: 10 0 5 0;">
+                                    <children>
+                                        <TextField fx:id="bidField" prefWidth="140.0" promptText="Nhập giá tiền muốn đặt..." />
+                                        <Button mnemonicParsing="false" onAction="#handleBid" style="-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-font-weight: bold;" text="Đặt Giá (Bid)" />
+                                    </children>
+                                </HBox>
+
+                                <Label fx:id="resultLabel" text="..." textFill="#7f8c8d" wrapText="true" />
+
+                                <Label text="Lịch sử đặt giá của phòng:">
+                                    <font>
+                                        <Font name="System Bold" size="13.0" />
+                                    </font>
+                                    <VBox.margin>
+                                        <Insets top="10.0" />
+                                    </VBox.margin>
+                                </Label>
+
+                                <TableView fx:id="bidTable" prefHeight="180.0" prefWidth="200.0">
+                                    <columns>
+                                        <TableColumn fx:id="colUser" prefWidth="100.0" text="Người Đặt" />
+                                        <TableColumn fx:id="colAmount" prefWidth="90.0" text="Số Tiền" />
+                                        <TableColumn fx:id="colTime" prefWidth="120.0" text="Thời Gian" />
+                                    </columns>
+                                </TableView>
+                            </children>
+                        </VBox>
+                    </content>
+                </ScrollPane>
+            </items>
+        </SplitPane>
     </center>
-
 </BorderPane>

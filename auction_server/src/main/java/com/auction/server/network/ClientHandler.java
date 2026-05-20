@@ -1,8 +1,13 @@
 package com.auction.server.network;
 
+import java.util.List;
 import java.util.Locale;
+
+import com.auction.common.model.Auction;
+import com.auction.server.service.AuctionService;
 import com.auction.server.service.UserService;
 import com.auction.common.model.User;
+import com.google.protobuf.AbstractMessage;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.net.Socket;
@@ -11,6 +16,8 @@ public class ClientHandler implements Runnable {
     private final Socket clientSocket;
 
     private final UserService userService = new UserService();
+
+    private final AuctionService auctionService = new AuctionService();
 
     public ClientHandler(Socket socket) {
         this.clientSocket = socket;
@@ -70,6 +77,24 @@ public class ClientHandler implements Runnable {
                     } else {
                         out.writeUTF("REGISTER_FAIL");
                     }
+                }
+                else if ("GET_ACTIVE_AUCTIONS".equals(command)) {
+                    List<Auction> activeAuctions = auctionService.getActiveAuctions();
+
+                    StringBuilder responseBuilder = new StringBuilder("ACTIVE_AUCTIONS,");
+
+                    for (int i = 0; i < activeAuctions.size(); i++) {
+                        Auction auction = activeAuctions.get(i);
+
+                        responseBuilder.append(auction.getId()).append("|")
+                                .append(auction.getItem().getName()).append("|")
+                                .append(String.format(Locale.US, "%.2f", auction.getCurrentPrice()));
+
+                        if (i < activeAuctions.size() - 1) {
+                            responseBuilder.append(";");
+                        }
+                    }
+                    out.writeUTF(responseBuilder.toString());
                 }
                 else if ("LOGOUT".equals(command)) {
                     out.writeUTF("GOODBYE");

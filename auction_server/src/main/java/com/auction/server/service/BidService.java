@@ -57,6 +57,5 @@ public class BidService {
 
     public Bid getWinner(Auction auction) {
         return null;
-        // FILLER CODE. nhớ code cái này
     }
 }

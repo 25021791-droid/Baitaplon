@@ -6,6 +6,8 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.function.Consumer;
 
 public class NetworkClientService {
@@ -19,7 +21,9 @@ public class NetworkClientService {
     private Consumer<Boolean> onBidResult;
     private Consumer<String> onNewBidBroadcast;
     private Consumer<Boolean> onRegisterResult;
+    private Consumer<List<Auction>> onActiveAuctionsReceived;
     public void setOnRegisterResult(Consumer<Boolean> callback) { this.onRegisterResult = callback; }
+    public void setOnActiveAuctionsReceived(Consumer<List<Auction>> callback) { this.onActiveAuctionsReceived = callback; }
 
     private NetworkClientService() {
         Thread initThread = new Thread(() -> {
@@ -94,6 +98,31 @@ public class NetworkClientService {
                     }
                     else if ("REGISTER_FAIL".equals(command)) {
                         if (onRegisterResult != null) Platform.runLater(() -> onRegisterResult.accept(false));
+                    }else if ("ACTIVE_AUCTIONS".equals(command)) {
+                        List<Auction> auctionList = new java.util.ArrayList<>();
+
+                        if (parts.length > 1 && !parts[1].isEmpty()) {
+                            String[] auctionsRaw = parts[1].split(";");
+
+                            for (String raw : auctionsRaw) {
+                                String[] data = raw.split("\\|");
+
+                                long auctionId = Long.parseLong(data[0]);
+                                String itemName = data[1];
+                                double currentPrice = Double.parseDouble(data[2]);
+
+                                Item item = new Electronics((int) auctionId, itemName);
+                                Auction auction = new Auction(item, currentPrice);
+                                auction.setId(auctionId);
+                                auction.setCurrentPrice(currentPrice);
+
+                                auctionList.add(auction);
+                            }
+                        }
+
+                        if (onActiveAuctionsReceived != null) {
+                            Platform.runLater(() -> onActiveAuctionsReceived.accept(auctionList));
+                        }
                     }
                 }
             } catch (IOException e) {
@@ -125,6 +154,16 @@ public class NetworkClientService {
         try {
             out.writeUTF(String.format("REGISTER,%s,%s,%s,%s", username, password, email, role));
         } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void requestActiveAuctions() {
+        try {
+            System.out.println("[Client] Đang yêu cầu danh sách phiên đấu giá từ Server...");
+            out.writeUTF("GET_ACTIVE_AUCTIONS");
+        } catch (IOException e) {
+            System.err.println("[Lỗi] Không thể gửi yêu cầu lấy danh sách!");
             e.printStackTrace();
         }
     }
