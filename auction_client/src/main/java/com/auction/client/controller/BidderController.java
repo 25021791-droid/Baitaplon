@@ -173,6 +173,23 @@ public class BidderController implements Initializable {
     }
 
     @FXML
+    private void handleProfile() {
+        try {
+            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/com/auction/Profile.fxml"));
+            javafx.scene.Parent root = loader.load();
+            javafx.stage.Stage dialog = new javafx.stage.Stage();
+            dialog.initOwner(lblUsername.getScene().getWindow());
+            dialog.initModality(javafx.stage.Modality.WINDOW_MODAL);
+            dialog.setTitle("Profile");
+            dialog.setScene(new javafx.scene.Scene(root));
+            dialog.showAndWait();
+            setupUser();
+        } catch (java.io.IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @FXML
     private void handleBackToLogin() {
         try {
             if (timeline != null) timeline.stop();

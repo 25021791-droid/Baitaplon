@@ -8,6 +8,11 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TableView;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -64,6 +69,23 @@ public class SellerController implements Initializable {
 
         } catch (NumberFormatException e) {
             showAlert("Lỗi nhập liệu", "Giá khởi điểm phải là một con số hợp lệ!");
+        }
+    }
+
+    @FXML
+    private void handleProfile() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/auction/Profile.fxml"));
+            Parent root = loader.load();
+            Stage dialog = new Stage();
+            dialog.initOwner(btnCreateAuction.getScene().getWindow());
+            dialog.initModality(Modality.WINDOW_MODAL);
+            dialog.setTitle("Profile");
+            dialog.setScene(new Scene(root));
+            dialog.showAndWait();
+        } catch (Exception e) {
+            e.printStackTrace();
+            showAlert("Error", "Cannot open profile screen.");
         }
     }
 

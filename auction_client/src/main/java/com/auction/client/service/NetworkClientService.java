@@ -21,8 +21,12 @@ public class NetworkClientService {
     private Consumer<String> onNewBidBroadcast;
     private Consumer<Boolean> onRegisterResult;
     private Consumer<List<Auction>> onActiveAuctionsReceived;
+    private Consumer<Boolean> onProfileUpdateResult;
+    private Consumer<Boolean> onPasswordChangeResult;
     public void setOnRegisterResult(Consumer<Boolean> callback) { this.onRegisterResult = callback; }
     public void setOnActiveAuctionsReceived(Consumer<List<Auction>> callback) { this.onActiveAuctionsReceived = callback; }
+    public void setOnProfileUpdateResult(Consumer<Boolean> callback) { this.onProfileUpdateResult = callback; }
+    public void setOnPasswordChangeResult(Consumer<Boolean> callback) { this.onPasswordChangeResult = callback; }
 
     private NetworkClientService() {
         Thread initThread = new Thread(() -> {
@@ -101,6 +105,18 @@ public class NetworkClientService {
                     }
                     else if ("REGISTER_FAIL".equals(command)) {
                         if (onRegisterResult != null) Platform.runLater(() -> onRegisterResult.accept(false));
+                    }
+                    else if ("PROFILE_UPDATE_SUCCESS".equals(command)) {
+                        if (onProfileUpdateResult != null) Platform.runLater(() -> onProfileUpdateResult.accept(true));
+                    }
+                    else if ("PROFILE_UPDATE_FAIL".equals(command)) {
+                        if (onProfileUpdateResult != null) Platform.runLater(() -> onProfileUpdateResult.accept(false));
+                    }
+                    else if ("PASSWORD_CHANGE_SUCCESS".equals(command)) {
+                        if (onPasswordChangeResult != null) Platform.runLater(() -> onPasswordChangeResult.accept(true));
+                    }
+                    else if ("PASSWORD_CHANGE_FAIL".equals(command)) {
+                        if (onPasswordChangeResult != null) Platform.runLater(() -> onPasswordChangeResult.accept(false));
                     }else if ("ACTIVE_AUCTIONS".equals(command)) {
                         List<Auction> auctionList = new java.util.ArrayList<>();
 
@@ -188,6 +204,44 @@ public class NetworkClientService {
         } catch (IOException e) {
             if (onRegisterResult != null) {
                 Platform.runLater(() -> onRegisterResult.accept(false));
+            }
+            e.printStackTrace();
+        }
+    }
+
+    public void updateProfile(int userId, String username, String email) {
+        if (!isConnected()) {
+            if (onProfileUpdateResult != null) {
+                Platform.runLater(() -> onProfileUpdateResult.accept(false));
+            }
+            return;
+        }
+
+        try {
+            out.writeUTF(String.format("UPDATE_PROFILE,%d,%s,%s", userId, username, email));
+            out.flush();
+        } catch (IOException e) {
+            if (onProfileUpdateResult != null) {
+                Platform.runLater(() -> onProfileUpdateResult.accept(false));
+            }
+            e.printStackTrace();
+        }
+    }
+
+    public void changePassword(int userId, String currentPassword, String newPassword) {
+        if (!isConnected()) {
+            if (onPasswordChangeResult != null) {
+                Platform.runLater(() -> onPasswordChangeResult.accept(false));
+            }
+            return;
+        }
+
+        try {
+            out.writeUTF(String.format("CHANGE_PASSWORD,%d,%s,%s", userId, currentPassword, newPassword));
+            out.flush();
+        } catch (IOException e) {
+            if (onPasswordChangeResult != null) {
+                Platform.runLater(() -> onPasswordChangeResult.accept(false));
             }
             e.printStackTrace();
         }

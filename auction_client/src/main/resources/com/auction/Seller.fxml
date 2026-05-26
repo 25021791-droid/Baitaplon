@@ -15,11 +15,14 @@
         <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
     </padding>
 
-    <Label text="Khu vực Người Bán (Seller Dashboard)">
-        <font>
-            <Font name="System Bold" size="24.0" />
-        </font>
-    </Label>
+    <HBox alignment="CENTER_LEFT" spacing="12.0">
+        <Label text="Khu vực Người Bán (Seller Dashboard)" HBox.hgrow="ALWAYS">
+            <font>
+                <Font name="System Bold" size="24.0" />
+            </font>
+        </Label>
+        <Button mnemonicParsing="false" onAction="#handleProfile" style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-weight: bold;" text="Profile" />
+    </HBox>
 
     <VBox spacing="10.0" style="-fx-border-color: #cccccc; -fx-border-radius: 5; -fx-padding: 15;">
         <Label text="Tạo phiên đấu giá mới" textFill="#333333">

@@ -83,6 +83,24 @@ public class ClientHandler implements Runnable {
                     }
                     out.flush();
                 }
+                else if ("UPDATE_PROFILE".equals(command)) {
+                    int userId = Integer.parseInt(parts[1]);
+                    String username = parts[2];
+                    String email = parts[3];
+
+                    boolean isSuccess = userService.updateProfile(userId, username, email);
+                    out.writeUTF(isSuccess ? "PROFILE_UPDATE_SUCCESS" : "PROFILE_UPDATE_FAIL");
+                    out.flush();
+                }
+                else if ("CHANGE_PASSWORD".equals(command)) {
+                    int userId = Integer.parseInt(parts[1]);
+                    String currentPassword = parts[2];
+                    String newPassword = parts[3];
+
+                    boolean isSuccess = userService.changePassword(userId, currentPassword, newPassword);
+                    out.writeUTF(isSuccess ? "PASSWORD_CHANGE_SUCCESS" : "PASSWORD_CHANGE_FAIL");
+                    out.flush();
+                }
                 else if ("GET_ACTIVE_AUCTIONS".equals(command)) {
                     List<Auction> activeAuctions = auctionService.getActiveAuctions();
 

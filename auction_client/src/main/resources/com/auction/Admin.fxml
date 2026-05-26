@@ -20,7 +20,8 @@
                 <Font name="System Bold" size="24.0" />
             </font>
         </Label>
-        <HBox alignment="CENTER_RIGHT" HBox.hgrow="ALWAYS">
+        <HBox alignment="CENTER_RIGHT" spacing="8.0" HBox.hgrow="ALWAYS">
+            <Button mnemonicParsing="false" onAction="#handleProfile" style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-weight: bold;" text="Profile" />
             <Button fx:id="btnRefresh" mnemonicParsing="false" style="-fx-background-color: #007bff; -fx-text-fill: white;" text="Làm mới dữ liệu (Refresh)" />
         </HBox>
     </HBox>

@@ -81,4 +81,51 @@ public class UserService {
             return false;
         }
     }
+
+    public boolean updateProfile(int userId, String username, String email) {
+        String sql = "UPDATE users SET username = ?, email = ? WHERE id = ?";
+
+        try (Connection conn = DatabaseService.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, username);
+            pstmt.setString(2, email);
+            pstmt.setInt(3, userId);
+
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean changePassword(int userId, String currentPassword, String newPassword) {
+        String selectSql = "SELECT password FROM users WHERE id = ?";
+        String updateSql = "UPDATE users SET password = ? WHERE id = ?";
+
+        try (Connection conn = DatabaseService.getConnection();
+             PreparedStatement selectStmt = conn.prepareStatement(selectSql)) {
+
+            selectStmt.setInt(1, userId);
+            ResultSet rs = selectStmt.executeQuery();
+
+            if (!rs.next()) {
+                return false;
+            }
+
+            String storedHash = rs.getString("password");
+            if (!PasswordService.checkPassword(currentPassword, storedHash)) {
+                return false;
+            }
+
+            try (PreparedStatement updateStmt = conn.prepareStatement(updateSql)) {
+                updateStmt.setString(1, PasswordService.hashPassword(newPassword));
+                updateStmt.setInt(2, userId);
+                return updateStmt.executeUpdate() > 0;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }
