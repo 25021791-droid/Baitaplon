@@ -67,7 +67,7 @@
 
                 <Button fx:id="registerButton" onAction="#handleRegister" text="REGISTER" maxWidth="1.7976931348623157E308" styleClass="register-button" style="-fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-font-size: 14px; -fx-border-color: #3b82f6; -fx-background-color: #3b82f6" />
 
-                <Label fx:id="messageLabel" text="" textFill="red" visible="false" />
+                <Label fx:id="messageLabel" text="" textFill="red" />
 
                 <HBox alignment="CENTER" spacing="5.0">
                     <children>

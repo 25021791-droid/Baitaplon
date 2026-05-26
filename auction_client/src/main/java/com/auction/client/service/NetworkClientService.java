@@ -7,7 +7,6 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.List;
-import java.util.ArrayList;
 import java.util.function.Consumer;
 
 public class NetworkClientService {
@@ -49,6 +48,10 @@ public class NetworkClientService {
     public static NetworkClientService getInstance() {
         if (instance == null) instance = new NetworkClientService();
         return instance;
+    }
+
+    public boolean isConnected() {
+        return socket != null && socket.isConnected() && !socket.isClosed() && out != null;
     }
 
     private void startListening() {
@@ -139,29 +142,67 @@ public class NetworkClientService {
     public void setOnNewBidBroadcast(Consumer<String> callback) { this.onNewBidBroadcast = callback; }
 
     public void login(String username, String password) {
+        if (!isConnected()) {
+            if (onLoginFail != null) {
+                Platform.runLater(() -> onLoginFail.accept("Cannot connect to server. Start the server first."));
+            }
+            return;
+        }
+
         try {
             out.writeUTF("LOGIN," + username + "," + password);
-        } catch (IOException e) { e.printStackTrace(); }
+            out.flush();
+        } catch (IOException e) {
+            if (onLoginFail != null) {
+                Platform.runLater(() -> onLoginFail.accept("Cannot send login request."));
+            }
+            e.printStackTrace();
+        }
     }
 
     public void placeBid(long auctionId, int userId, double amount) {
+        if (!isConnected()) {
+            if (onBidResult != null) {
+                Platform.runLater(() -> onBidResult.accept(false));
+            }
+            return;
+        }
+
         try {
             out.writeUTF(String.format("BID,%d,%d,%.2f", auctionId, userId, amount));
+            out.flush();
         } catch (IOException e) { e.printStackTrace(); }
     }
 
     public void register(String username, String password, String email, String role) {
+        if (!isConnected()) {
+            if (onRegisterResult != null) {
+                Platform.runLater(() -> onRegisterResult.accept(false));
+            }
+            return;
+        }
+
         try {
             out.writeUTF(String.format("REGISTER,%s,%s,%s,%s", username, password, email, role));
+            out.flush();
         } catch (IOException e) {
+            if (onRegisterResult != null) {
+                Platform.runLater(() -> onRegisterResult.accept(false));
+            }
             e.printStackTrace();
         }
     }
 
     public void requestActiveAuctions() {
+        if (!isConnected()) {
+            System.err.println("[Error] Cannot request auctions because the client is not connected.");
+            return;
+        }
+
         try {
             System.out.println("[Client] Đang yêu cầu danh sách phiên đấu giá từ Server...");
             out.writeUTF("GET_ACTIVE_AUCTIONS");
+            out.flush();
         } catch (IOException e) {
             System.err.println("[Lỗi] Không thể gửi yêu cầu lấy danh sách!");
             e.printStackTrace();

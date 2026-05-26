@@ -1,12 +1,14 @@
 package com.auction.client.controller;
 
 import com.auction.client.service.NetworkClientService;
+import javafx.animation.PauseTransition;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.*;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 import java.net.URL;
 import java.util.ResourceBundle;
 
@@ -19,20 +21,33 @@ public class RegisterController implements Initializable {
     @FXML private RadioButton bidderRadio;
     @FXML private RadioButton sellerRadio;
     @FXML private Label messageLabel;
+    private int registerRequestId = 0;
+    private boolean waitingForRegisterResponse = false;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         NetworkClientService.getInstance().setOnRegisterResult(isSuccess -> {
+            if (!waitingForRegisterResponse) {
+                return;
+            }
+
+            waitingForRegisterResponse = false;
+
             if (isSuccess) {
-                messageLabel.setStyle("-fx-text-fill: green;");
-                messageLabel.setText("Register success! Please login.");
+                showMessage("Register success! Please login.", "green");
 
                 handleBackToLogin();
             } else {
-                messageLabel.setStyle("-fx-text-fill: red;");
-                messageLabel.setText("Username or email is already in use.");
+                showMessage("Username or email is already in use.", "red");
             }
         });
+    }
+
+    private void showMessage(String message, String color) {
+        messageLabel.setVisible(true);
+        messageLabel.setManaged(true);
+        messageLabel.setText(message);
+        messageLabel.setStyle("-fx-text-fill: " + color + ";");
     }
 
     private boolean isValidEmail(String email) {
@@ -48,27 +63,39 @@ public class RegisterController implements Initializable {
         String confirmPass = confirmPasswordField.getText();
 
         if (user.isEmpty() || email.isEmpty() || pass.isEmpty() || confirmPass.isEmpty() ) {
-            messageLabel.setText("You have not entered your account or password.");
-            messageLabel.setStyle("-fx-text-fill: red;");
+            showMessage("You have not entered your account or password.", "red");
             return;
         }
 
         if (!pass.equals(confirmPass)) {
-            messageLabel.setText("Password does not match.");
-            messageLabel.setStyle("-fx-text-fill: red;");
+            showMessage("Password does not match.", "red");
             return;
         }
 
         if (!isValidEmail(email)) {
-            messageLabel.setText("Invalid Email!");
-            messageLabel.setStyle("-fx-text-fill: red;");
+            showMessage("Invalid Email!", "red");
+            return;
+        }
+
+        if (!NetworkClientService.getInstance().isConnected()) {
+            showMessage("Cannot connect to server. Start the server first.", "red");
             return;
         }
 
         String role = bidderRadio.isSelected() ? "BIDDER" : "SELLER";
 
-        messageLabel.setText("Processing...");
-        messageLabel.setStyle("-fx-text-fill: black;");
+        showMessage("Processing...", "black");
+        waitingForRegisterResponse = true;
+        int currentRequestId = ++registerRequestId;
+
+        PauseTransition timeout = new PauseTransition(Duration.seconds(10));
+        timeout.setOnFinished(event -> {
+            if (waitingForRegisterResponse && currentRequestId == registerRequestId) {
+                waitingForRegisterResponse = false;
+                showMessage("Register timeout. Check server or database connection.", "red");
+            }
+        });
+        timeout.play();
 
         NetworkClientService.getInstance().register(user, pass, email, role);
     }
@@ -86,7 +113,7 @@ public class RegisterController implements Initializable {
 
         } catch (Exception e) {
             e.printStackTrace();
-            messageLabel.setText("Error loading Login screen");
+            showMessage("Error loading Login screen", "red");
         }
     }
 }

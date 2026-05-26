@@ -22,13 +22,13 @@ public class BiddingRoomController {
 
     @FXML
     public void initialize() {
-        // 1. Khởi tạo biểu đồ và gắn vào giao diện nếu chartContainer đã được tạo
+        // Khởi tạo biểu đồ và gắn vào giao diện nếu chartContainer đã được tạo
         if (chartContainer != null) {
             chartController = new RealtimeChartController();
             chartContainer.getChildren().add(chartController.createChart());
         }
 
-        // 2. Lắng nghe sự kiện click nút Đặt giá (nếu nút đã được tạo)
+        // Lắng nghe sự kiện click nút Đặt giá (nếu nút đã được tạo)
         if (placeBidButton != null) {
             placeBidButton.setOnAction(e -> handlePlaceBid());
         }

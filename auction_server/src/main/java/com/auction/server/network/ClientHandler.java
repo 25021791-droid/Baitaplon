@@ -7,7 +7,6 @@ import com.auction.common.model.Auction;
 import com.auction.server.service.AuctionService;
 import com.auction.server.service.UserService;
 import com.auction.common.model.User;
-import com.google.protobuf.AbstractMessage;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.net.Socket;
@@ -57,12 +56,15 @@ public class ClientHandler implements Runnable {
 
                         String response = String.format(Locale.US, "LOGIN_SUCCESS,%d,%s,%s,%.2f,%s", id, name, email, balance, role);
                         out.writeUTF(response);
+                        out.flush();
                     } else {
                         out.writeUTF("LOGIN_FAIL");
+                        out.flush();
                     }
                 }
                 else if ("BID".equals(command)) {
                     out.writeUTF("BID_OK");
+                    out.flush();
                 }
                 else if ("REGISTER".equals(command)) {
                     String username = parts[1];
@@ -70,13 +72,16 @@ public class ClientHandler implements Runnable {
                     String email = parts[3];
                     String role = parts[4];
 
-                    boolean isSuccess = userService.register(username, password, email, role);;
+                    System.out.println("[Server] Register start: " + username + " / " + role);
+                    boolean isSuccess = userService.register(username, password, email, role);
+                    System.out.println("[Server] Register result: " + isSuccess);
 
                     if (isSuccess) {
                         out.writeUTF("REGISTER_SUCCESS");
                     } else {
                         out.writeUTF("REGISTER_FAIL");
                     }
+                    out.flush();
                 }
                 else if ("GET_ACTIVE_AUCTIONS".equals(command)) {
                     List<Auction> activeAuctions = auctionService.getActiveAuctions();
@@ -95,9 +100,11 @@ public class ClientHandler implements Runnable {
                         }
                     }
                     out.writeUTF(responseBuilder.toString());
+                    out.flush();
                 }
                 else if ("LOGOUT".equals(command)) {
                     out.writeUTF("GOODBYE");
+                    out.flush();
                     isRunning = false;
                 }
             }
@@ -107,7 +114,8 @@ public class ClientHandler implements Runnable {
             clientSocket.close();
 
         } catch (Exception e) {
-            System.out.println("[Server] Client đã ngắt kết nối đột ngột.");
+            System.out.println("[Server] Client connection ended or failed.");
+            e.printStackTrace();
         }
     }
 }
