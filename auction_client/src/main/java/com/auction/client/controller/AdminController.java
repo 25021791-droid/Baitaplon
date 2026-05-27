@@ -16,7 +16,8 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 import java.net.URL;
-import java.util.ResourceBundle;
+import java.util.ResourceBundle;import javafx.scene.control.TableColumn;
+import javafx.beans.property.SimpleStringProperty;
 
 public class AdminController implements Initializable {
 
@@ -36,6 +37,7 @@ public class AdminController implements Initializable {
         this.networkService = NetworkClientService.getInstance();
         // ========== SETUP CỘT CHO BẢNG CHỜ DUYỆT ==========
         setupPendingAuctionsTable();
+        setupAllAuctionsTable();
         // ========== NÚT LÀM MỚI ==========
         btnRefresh.setOnAction(event -> {
             loadSystemData();
@@ -69,7 +71,13 @@ public class AdminController implements Initializable {
 
         // ========== NÚT DUYỆT AUCTION ==========
         btnApprove.setOnAction(event -> handleApprove());
-
+        networkService.setOnActiveAuctionsReceived(auctions -> {
+            Platform.runLater(() -> {
+                tableAllAuctions.getItems().clear();
+                tableAllAuctions.getItems().addAll(auctions);
+                System.out.println("[Admin] Đã load " + auctions.size() + " auction vào bảng quản lý");
+            });
+        });
         // ========== CALLBACK: Nhận danh sách auction chờ duyệt ==========
         networkService.setOnPendingAuctionsReceived(auctions -> {
             Platform.runLater(() -> {
@@ -90,40 +98,43 @@ public class AdminController implements Initializable {
                 }
             });
         });
+        networkService.setOnCancelAuctionResult(success -> {
+            Platform.runLater(() -> {
+                if (success) {
+                    showAlert("Thành công", "Đã hủy phiên đấu giá!");
+                } else {
+                    showAlert("Lỗi", "Không thể hủy phiên đấu giá!");
+                }
+                // Luôn refresh dù thành công hay thất bại
+                networkService.requestActiveAuctions();
+                networkService.requestPendingAuctions();
+            });
+        });
 
-        // ========== LOAD DỮ LIỆU BAN ĐẦU ==========
         loadSystemData();
-        networkService.requestPendingAuctions(); // Load danh sách chờ duyệt
+        networkService.requestPendingAuctions();
+        networkService.requestActiveAuctions();
     }
     private void setupPendingAuctionsTable() {
-        // Xóa cột cũ (nếu có)
         tablePendingAuctions.getColumns().clear();
-
-        // Tạo cột ID
         javafx.scene.control.TableColumn<Auction, String> colId = new javafx.scene.control.TableColumn<>("ID");
         colId.setCellValueFactory(cellData -> {
             Long id = cellData.getValue().getId();
             return new javafx.beans.property.SimpleStringProperty(id != null ? id.toString() : "N/A");
         });
         colId.setPrefWidth(75);
-
-        // Tạo cột Tên Sản Phẩm
         javafx.scene.control.TableColumn<Auction, String> colName = new javafx.scene.control.TableColumn<>("Tên Sản Phẩm");
         colName.setCellValueFactory(cellData -> {
             String name = cellData.getValue().getItem().getName();
             return new javafx.beans.property.SimpleStringProperty(name != null ? name : "N/A");
         });
         colName.setPrefWidth(250);
-
-        // Tạo cột Giá Khởi Điểm
         javafx.scene.control.TableColumn<Auction, String> colPrice = new javafx.scene.control.TableColumn<>("Giá Khởi Điểm");
         colPrice.setCellValueFactory(cellData -> {
             double price = cellData.getValue().getCurrentPrice();
             return new javafx.beans.property.SimpleStringProperty(String.format("%.2f", price));
         });
         colPrice.setPrefWidth(150);
-
-        // Tạo cột Trạng Thái
         javafx.scene.control.TableColumn<Auction, String> colStatus = new javafx.scene.control.TableColumn<>("Trạng Thái");
         colStatus.setCellValueFactory(cellData -> {
             String status = cellData.getValue().getStatus() != null ?
@@ -131,19 +142,14 @@ public class AdminController implements Initializable {
             return new javafx.beans.property.SimpleStringProperty(status);
         });
         colStatus.setPrefWidth(150);
-
-        // Thêm các cột vào bảng
         tablePendingAuctions.getColumns().addAll(colId, colName, colPrice, colStatus);
     }
     private void loadSystemData() {
         System.out.println("Admin đang yêu cầu tải dữ liệu hệ thống...");
-        // Bạn cần bổ sung các hàm này vào NetworkClientService:
-        // networkService.requestAllUsers(...);
-        // networkService.requestAllAuctions(...);
+        networkService.requestActiveAuctions();
+        networkService.requestPendingAuctions();
     }
-
     private void handleCancelSelectedAuction() {
-        // Lấy dòng (Auction) đang được chọn trong bảng
         Auction selectedAuction = tableAllAuctions.getSelectionModel().getSelectedItem();
 
         if (selectedAuction == null) {
@@ -151,11 +157,48 @@ public class AdminController implements Initializable {
             return;
         }
 
-        // Gửi lệnh ADMIN_CANCEL_AUCTION lên Server
         System.out.println("Admin yêu cầu hủy phiên: " + selectedAuction.getId());
-        // networkService.cancelAuction(selectedAuction.getId());
-    }
+        networkService.cancelAuction(selectedAuction.getId());
 
+        // ========== REFRESH NGAY LẬP TỨC ==========
+        // Không chờ callback, refresh cả 2 bảng
+        networkService.requestActiveAuctions();
+        networkService.requestPendingAuctions();
+
+        showAlert("Đã gửi", "Đã gửi yêu cầu hủy và làm mới danh sách!");
+    }
+    private void setupAllAuctionsTable() {
+        tableAllAuctions.getColumns().clear();
+
+        TableColumn<Auction, String> colId = new TableColumn<>("ID Phiên");
+        colId.setCellValueFactory(cell -> new SimpleStringProperty(String.valueOf(cell.getValue().getId())));
+        colId.setPrefWidth(75);
+
+        TableColumn<Auction, String> colName = new TableColumn<>("Tên Sản Phẩm");
+        colName.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getItem().getName()));
+        colName.setPrefWidth(250);
+
+        TableColumn<Auction, String> colPrice = new TableColumn<>("Giá Cao Nhất");
+        colPrice.setCellValueFactory(cell -> new SimpleStringProperty(String.format("%.2f", cell.getValue().getCurrentPrice())));
+        colPrice.setPrefWidth(150);
+
+        TableColumn<Auction, String> colBidder = new TableColumn<>("Người Giữ Giá");
+        colBidder.setCellValueFactory(cell -> {
+            // Kiểm tra nếu có bid thì lấy tên bidder
+            if (cell.getValue().getBids() != null && !cell.getValue().getBids().isEmpty()) {
+                int lastIndex = cell.getValue().getBids().size() - 1;
+                return new SimpleStringProperty(cell.getValue().getBids().get(lastIndex).getBidder().getName());
+            }
+            return new SimpleStringProperty("Chưa có");
+        });
+        colBidder.setPrefWidth(150);
+
+        TableColumn<Auction, String> colStatus = new TableColumn<>("Trạng Thái");
+        colStatus.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getStatus().toString()));
+        colStatus.setPrefWidth(150);
+
+        tableAllAuctions.getColumns().addAll(colId, colName, colPrice, colBidder, colStatus);
+    }
     @FXML
     private void handleProfile() {
         try {

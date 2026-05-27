@@ -15,13 +15,13 @@ public class AuctionService {
     private final UserService userService = new UserService();
 
     public synchronized List<Auction> getActiveAuctions() {
-        List<Auction> activeAuctions = new ArrayList<>();
-        for (Auction auction : auctionList) {
-            if (auction.getStatus() == AuctionStatus.RUNNING) {
-                activeAuctions.add(auction);
+        List<Auction> active = new ArrayList<>();
+        for (Auction a : auctionList) {
+            if (a.getStatus() == AuctionStatus.RUNNING || a.getStatus() == AuctionStatus.OPEN) {
+                active.add(a);
             }
         }
-        return activeAuctions;
+        return active;
     }
 
     public synchronized void addAuction(Auction auction) {
@@ -111,6 +111,17 @@ public class AuctionService {
         }
         return result;
     }
+    public synchronized boolean cancelAuction(long auctionId) {
+        for (Auction a : auctionList) {
+            if (a.getId() == auctionId) {
+                a.setStatus(AuctionStatus.CANCELED);
+                System.out.println("[AuctionService] Đã hủy auction ID: " + auctionId);
+                return true;
+            }
+        }
+        System.out.println("[AuctionService] KHÔNG tìm thấy auction ID: " + auctionId);
+        return false;
+    }
     public synchronized boolean approveAuction(long auctionId) {
         for (Auction a : auctionList) {
             if (a.getId() == auctionId && a.getStatus() == AuctionStatus.ONQUEUE) {
@@ -120,5 +131,16 @@ public class AuctionService {
             }
         }
         return false;
+    }
+    public synchronized List<Auction> getEndedAuctions() {
+        List<Auction> ended = new ArrayList<>();
+        for (Auction a : auctionList) {
+            if (a.getStatus() == AuctionStatus.FINISHED ||
+                    a.getStatus() == AuctionStatus.CANCELED ||
+                    a.getStatus() == AuctionStatus.PAID) {
+                ended.add(a);
+            }
+        }
+        return ended;
     }
 }
