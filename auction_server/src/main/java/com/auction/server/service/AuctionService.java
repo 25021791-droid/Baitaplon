@@ -102,12 +102,20 @@ public class AuctionService {
         System.out.println("[AuctionService] Số auction ONQUEUE: " + pending.size());
         return pending;
     }
-
+    public synchronized List<Auction> getAuctionsBySellerId(int sellerId) {
+        List<Auction> result = new ArrayList<>();
+        for (Auction a : auctionList) {
+            if (a.getSellerId() == sellerId) {
+                result.add(a);
+            }
+        }
+        return result;
+    }
     public synchronized boolean approveAuction(long auctionId) {
         for (Auction a : auctionList) {
             if (a.getId() == auctionId && a.getStatus() == AuctionStatus.ONQUEUE) {
-                a.setStatus(AuctionStatus.OPEN);
-                System.out.println("Đã duyệt auction: " + auctionId);
+                a.setStatus(AuctionStatus.RUNNING);
+                System.out.println("[Server] Admin đã duyệt + bắt đầu auction ID: " + auctionId);
                 return true;
             }
         }

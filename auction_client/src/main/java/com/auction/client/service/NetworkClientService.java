@@ -27,7 +27,15 @@ public class NetworkClientService {
     public void setOnActiveAuctionsReceived(Consumer<List<Auction>> callback) { this.onActiveAuctionsReceived = callback; }
     public void setOnProfileUpdateResult(Consumer<Boolean> callback) { this.onProfileUpdateResult = callback; }
     public void setOnPasswordChangeResult(Consumer<Boolean> callback) { this.onPasswordChangeResult = callback; }
-
+    private Consumer<List<Auction>> onMyAuctionsReceived;
+    public void setOnMyAuctionsReceived(Consumer<List<Auction>> c) { this.onMyAuctionsReceived = c; }
+    public void requestMyAuctions(int sellerId) {
+        if (!isConnected()) return;
+        try {
+            out.writeUTF("GET_MY_AUCTIONS," + sellerId);
+            out.flush();
+        } catch (IOException e) { e.printStackTrace(); }
+    }
     private NetworkClientService() {
         Thread initThread = new Thread(() -> {
             try {
@@ -125,6 +133,22 @@ public class NetworkClientService {
                     }
                     else if ("PASSWORD_CHANGE_FAIL".equals(command)) {
                         if (onPasswordChangeResult != null) Platform.runLater(() -> onPasswordChangeResult.accept(false));
+                    }else if ("MY_AUCTIONS".equals(command)) {
+                        List<Auction> list = new java.util.ArrayList<>();
+                        if (parts.length > 1 && !parts[1].isEmpty()) {
+                            for (String raw : parts[1].split(";")) {
+                                String[] d = raw.split("\\|");
+                                if (d.length >= 4) {
+                                    Auction a = new Auction(new Electronics(0, d[1]), Double.parseDouble(d[2]));
+                                    a.setId(Long.parseLong(d[0]));
+                                    a.setStatus(AuctionStatus.valueOf(d[3]));
+                                    list.add(a);
+                                }
+                            }
+                        }
+                        if (onMyAuctionsReceived != null) {
+                            Platform.runLater(() -> onMyAuctionsReceived.accept(list));
+                        }
                     }
                     else if ("CREATE_AUCTION_SUCCESS".equals(command)) {
                         if (onCreateAuctionResult != null)
@@ -177,7 +201,6 @@ public class NetworkClientService {
                                     String idStr = data[0];
                                     String itemName = data[1];
                                     String priceStr = data[2];
-
                                     System.out.println("[Client] ID=" + idStr + " Name=" + itemName + " Price=" + priceStr);
 
                                     // Xử lý ID null

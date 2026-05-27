@@ -1,31 +1,27 @@
 package com.auction.client.controller;
 
 import com.auction.client.service.NetworkClientService;
+import com.auction.client.utils.UserSession;
 import com.auction.common.model.Auction;
+import com.auction.common.model.User;
 import javafx.application.Platform;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.fxml.FXML;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.TextField;
-import javafx.scene.control.TableView;
 import javafx.fxml.FXMLLoader;
+import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
+import java.io.File;
 import java.net.URL;
 import java.util.ResourceBundle;
-import javafx.fxml.Initializable;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.scene.control.Label;
-import javafx.stage.FileChooser;
-import java.io.File;
-import java.io.IOException;
-import com.auction.common.model.User;
-import com.auction.client.utils.UserSession;
-import com.auction.common.model.User;
+
 public class SellerController implements Initializable {
 
     @FXML private TextField txtItemName;
@@ -34,24 +30,79 @@ public class SellerController implements Initializable {
     @FXML private Button btnChooseImage;
     @FXML private Label lblImageName;
     @FXML private ImageView imgPreview;
-
-    private File selectedImageFile;
-    private String imageBase64;
-    // Bảng để Seller xem các mặt hàng mình đang bán
     @FXML private TableView<Auction> tableMyAuctions;
 
+    private File selectedImageFile;
     private NetworkClientService networkService;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         this.networkService = NetworkClientService.getInstance();
 
-        // Sự kiện khi bấm nút Tạo phiên đấu giá
+        // ========== SETUP BẢNG ==========
+        setupMyAuctionsTable();
+
+        // ========== LOAD DANH SÁCH ==========
+        User currentUser = UserSession.getUser();
+        if (currentUser != null) {
+            networkService.requestMyAuctions(currentUser.getId());
+        }
+
+        // ========== CALLBACK: Nhận danh sách auction của seller ==========
+        networkService.setOnMyAuctionsReceived(auctions -> {
+            Platform.runLater(() -> {
+                tableMyAuctions.getItems().clear();
+                tableMyAuctions.getItems().addAll(auctions);
+                System.out.println("[Seller] Đã load " + auctions.size() + " auction");
+            });
+        });
+
+        // ========== CALLBACK: Kết quả tạo auction ==========
+        networkService.setOnCreateAuctionResult(isSuccess -> {
+            Platform.runLater(() -> {
+                if (isSuccess) {
+                    showAlert("Thành công", "Phiên đấu giá đã được tạo!");
+                    txtItemName.clear();
+                    txtStartPrice.clear();
+                    lblImageName.setText("Chưa chọn ảnh");
+                    imgPreview.setVisible(false);
+                    selectedImageFile = null;
+                    // Refresh danh sách
+                    User user = UserSession.getUser();
+                    if (user != null) {
+                        networkService.requestMyAuctions(user.getId());
+                    }
+                } else {
+                    showAlert("Thất bại", "Không thể tạo phiên đấu giá!");
+                }
+            });
+        });
+
+        // ========== SỰ KIỆN NÚT ==========
         btnCreateAuction.setOnAction(event -> handleCreateAuction());
         btnChooseImage.setOnAction(event -> handleChooseImage());
+    }
 
-        // (Tùy chọn) Lắng nghe phản hồi từ Server khi tạo thành công
-        // networkService.setOnAuctionCreatedResult(isSuccess -> { ... });
+    private void setupMyAuctionsTable() {
+        tableMyAuctions.getColumns().clear();
+
+        TableColumn<Auction, String> colId = new TableColumn<>("ID");
+        colId.setCellValueFactory(cell -> new SimpleStringProperty(String.valueOf(cell.getValue().getId())));
+        colId.setPrefWidth(75);
+
+        TableColumn<Auction, String> colName = new TableColumn<>("Tên Sản Phẩm");
+        colName.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getItem().getName()));
+        colName.setPrefWidth(250);
+
+        TableColumn<Auction, String> colPrice = new TableColumn<>("Giá Hiện Tại");
+        colPrice.setCellValueFactory(cell -> new SimpleStringProperty(String.format("%.2f", cell.getValue().getCurrentPrice())));
+        colPrice.setPrefWidth(150);
+
+        TableColumn<Auction, String> colStatus = new TableColumn<>("Trạng Thái");
+        colStatus.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getStatus().toString()));
+        colStatus.setPrefWidth(150);
+
+        tableMyAuctions.getColumns().addAll(colId, colName, colPrice, colStatus);
     }
 
     private void handleCreateAuction() {
@@ -77,27 +128,28 @@ public class SellerController implements Initializable {
             }
             int sellerId = currentUser.getId();
 
-            // Đăng ký callback nhận kết quả
-            networkService.setOnCreateAuctionResult(isSuccess -> {
-                Platform.runLater(() -> {
-                    if (isSuccess) {
-                        showAlert("Thành công", "Phiên đấu giá đã được tạo!");
-                        txtItemName.clear();
-                        txtStartPrice.clear();
-                        lblImageName.setText("Chưa chọn ảnh");
-                        imgPreview.setVisible(false);
-                        selectedImageFile = null;
-                    } else {
-                        showAlert("Thất bại", "Không thể tạo phiên đấu giá!");
-                    }
-                });
-            });
-
-            // Gửi request (không cần encode Base64 nữa!)
+            // Gửi request
             networkService.createAuction(itemName, startPrice, sellerId, selectedImageFile);
 
         } catch (NumberFormatException e) {
             showAlert("Lỗi nhập liệu", "Giá khởi điểm phải là một con số hợp lệ!");
+        }
+    }
+
+    private void handleChooseImage() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Chọn ảnh sản phẩm");
+        fileChooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("Ảnh", "*.png", "*.jpg", "*.jpeg", "*.gif")
+        );
+
+        selectedImageFile = fileChooser.showOpenDialog(btnChooseImage.getScene().getWindow());
+
+        if (selectedImageFile != null) {
+            lblImageName.setText(selectedImageFile.getName());
+            Image image = new Image(selectedImageFile.toURI().toString());
+            imgPreview.setImage(image);
+            imgPreview.setVisible(true);
         }
     }
 
@@ -114,12 +166,12 @@ public class SellerController implements Initializable {
             dialog.showAndWait();
         } catch (Exception e) {
             e.printStackTrace();
-            showAlert("Error", "Cannot open profile screen.");
         }
     }
+
     @FXML
     private void handleLogout() {
-        com.auction.client.utils.UserSession.cleanUserSession();
+        UserSession.cleanUserSession();
         Stage stage = (Stage) btnCreateAuction.getScene().getWindow();
         stage.close();
         try {
@@ -133,6 +185,7 @@ public class SellerController implements Initializable {
             e.printStackTrace();
         }
     }
+
     private void showAlert(String title, String content) {
         Platform.runLater(() -> {
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
@@ -141,25 +194,5 @@ public class SellerController implements Initializable {
             alert.setContentText(content);
             alert.showAndWait();
         });
-    }
-    private void handleChooseImage() {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Chọn ảnh sản phẩm");
-        fileChooser.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("Ảnh", "*.png", "*.jpg", "*.jpeg", "*.gif")
-        );
-
-        selectedImageFile = fileChooser.showOpenDialog(btnChooseImage.getScene().getWindow());
-
-        if (selectedImageFile != null) {
-            lblImageName.setText(selectedImageFile.getName());
-
-            // Hiển thị preview
-            Image image = new Image(selectedImageFile.toURI().toString());
-            imgPreview.setImage(image);
-            imgPreview.setVisible(true);
-
-            // KHÔNG CẦN encodeBase64 nữa!
-        }
     }
 }

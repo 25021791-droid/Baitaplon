@@ -172,6 +172,21 @@ public class ClientHandler implements Runnable {
                     System.out.println("[Server] Gửi response: " + sb.toString());
                     out.writeUTF(sb.toString());
                     out.flush();
+                }else if ("GET_MY_AUCTIONS".equals(command)) {
+                    int sellerId = Integer.parseInt(parts[1]);
+                    List<Auction> myAuctions = auctionService.getAuctionsBySellerId(sellerId);
+
+                    StringBuilder sb = new StringBuilder("MY_AUCTIONS,");
+                    for (int i = 0; i < myAuctions.size(); i++) {
+                        Auction a = myAuctions.get(i);
+                        sb.append(a.getId()).append("|")
+                                .append(a.getItem().getName()).append("|")
+                                .append(String.format(Locale.US, "%.2f", a.getCurrentPrice())).append("|")
+                                .append(a.getStatus().toString());
+                        if (i < myAuctions.size() - 1) sb.append(";");
+                    }
+                    out.writeUTF(sb.toString());
+                    out.flush();
                 }
                 else if ("APPROVE_AUCTION".equals(command)) {
                     long auctionId = Long.parseLong(parts[1]);

@@ -5,13 +5,15 @@ import java.util.List;
 import java.time.LocalDateTime;
 
 public class Auction {
+    private LocalDateTime endTime;
 
+    public LocalDateTime getEndTime() { return endTime; }
+    public void setEndTime(LocalDateTime endTime) { this.endTime = endTime; }
     private Long id; // Added an ID field
     private Item item;
     private List<Bid> bids;
     private double currentPrice;
     private AuctionStatus status;
-    private LocalDateTime endTime;
     private int sellerId;
     public int getSellerId() {
         return sellerId;
@@ -32,15 +34,6 @@ public class Auction {
                this.status == AuctionStatus.CANCELED ||
                this.status == AuctionStatus.PAID;
     }
-
-    public LocalDateTime getEndTime() {
-        return endTime;
-    }
-
-    public void setEndTime(LocalDateTime endTime) {
-        this.endTime = endTime;
-    }
-
     public Long getId() {
         return id;
     }

@@ -44,7 +44,13 @@ public class BidderController implements Initializable {
         this.networkService = NetworkClientService.getInstance();
         setupUser();
         setupBidLogTable();
-
+        // Tự động refresh mỗi 5 giây (test)
+        Timeline refreshTimeline = new Timeline(new KeyFrame(Duration.seconds(5), event -> {
+            System.out.println("[Bidder] Tự động refresh danh sách auction...");
+            networkService.requestActiveAuctions();
+        }));
+        refreshTimeline.setCycleCount(Timeline.INDEFINITE);
+        refreshTimeline.play();
         networkService.setOnActiveAuctionsReceived(auctionList -> {
             updateCardGrid(auctionList);
         });
@@ -201,5 +207,12 @@ public class BidderController implements Initializable {
         } catch (java.io.IOException e) {
             e.printStackTrace();
         }
+    }
+    @FXML
+    private void handleRefresh() {
+        System.out.println("[Bidder] Làm mới danh sách auction...");
+        networkService.requestActiveAuctions();
+        resultLabel.setText("Đã làm mới danh sách!");
+        resultLabel.setStyle("-fx-text-fill: green;");
     }
 }

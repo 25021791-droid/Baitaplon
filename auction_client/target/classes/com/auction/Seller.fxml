@@ -83,6 +83,14 @@
         <VBox.margin>
             <Insets top="10.0" />
         </VBox.margin>
+        <TableView fx:id="tableMyAuctions" prefHeight="350.0" VBox.vgrow="ALWAYS">
+            <columns>
+                <TableColumn prefWidth="75.0" text="ID" />
+                <TableColumn prefWidth="250.0" text="Tên Sản Phẩm" />
+                <TableColumn prefWidth="150.0" text="Giá Hiện Tại" />
+                <TableColumn prefWidth="150.0" text="Trạng Thái" />
+            </columns>
+        </TableView>
     </Label>
 
     <TableView fx:id="tableMyAuctions" prefHeight="350.0" VBox.vgrow="ALWAYS">

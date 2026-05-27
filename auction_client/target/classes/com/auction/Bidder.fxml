@@ -49,6 +49,7 @@
                         <Insets right="20.0" />
                     </HBox.margin>
                 </VBox>
+                <Button mnemonicParsing="false" onAction="#handleRefresh" style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold;" text="Làm mới" />
                 <Button mnemonicParsing="false" onAction="#handleProfile" style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-weight: bold;" text="Profile" />
                 <Button mnemonicParsing="false" onAction="#handleBackToLogin" style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-weight: bold;" text="Đăng Xuất" />
             </children>
