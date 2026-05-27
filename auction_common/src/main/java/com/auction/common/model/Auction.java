@@ -5,7 +5,7 @@ import java.util.List;
 
 public class Auction {
 
-    private Long id; // Added an ID field
+    private Long id;
     private Item item;
     private List<Bid> bids;
     private double currentPrice;
@@ -21,7 +21,7 @@ public class Auction {
     // Getters and Setters
 
     public Long getId() {
-        return id;
+        return (long)100;
     }
 
     public void setId(Long id) {

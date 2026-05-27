@@ -31,6 +31,7 @@
                 </HBox>
 
                 <Label fx:id="resultLabel" text="..." />
+                <Label fx:id="lblCurrentPrice" text="aaa" />
             </children>
         </VBox>
     </center>

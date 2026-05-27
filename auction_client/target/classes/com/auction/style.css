@@ -1,0 +1,39 @@
+
+.root {
+    -fx-font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+}
+
+.input-field {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #cccccc;
+    -fx-border-radius: 5px;
+    -fx-background-radius: 5px;
+    -fx-padding: 10px;
+    -fx-font-size: 14px;
+}
+
+.input-field:focused {
+    -fx-border-color: #3b82f6;
+}
+
+.combo-box .list-cell {
+    -fx-font-size: 14px;
+    -fx-text-fill: #000000;
+}
+
+.register-button {
+    -fx-background-color: #3b82f6;
+    -fx-text-fill: #ffffff;
+    -fx-background-radius: 5px;
+    -fx-font-weight: bold;
+    -fx-font-size: 16px;
+    -fx-padding: 12px;
+}
+
+.register-button:hover {
+    -fx-background-color: #2563eb;
+}
+
+.register-button:pressed {
+    -fx-background-color: #1d4ed8;
+}

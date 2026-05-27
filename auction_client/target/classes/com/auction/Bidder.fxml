@@ -3,7 +3,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<BorderPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.controller.AuctionController">
+<BorderPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.controller.BidderController">
 
     <top>
         <GridPane style="-fx-background-color: #2c3e50; -fx-padding: 10;">
@@ -31,6 +31,7 @@
                 </HBox>
 
                 <Label fx:id="resultLabel" text="..." />
+                <Label fx:id="lblCurrentPrice" text="aaa" />
             </children>
         </VBox>
     </center>

@@ -26,7 +26,7 @@
          <children>
             <VBox alignment="TOP_CENTER" spacing="10.0">
                <children>
-                  <Label text="REGISTER" style="-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #000000;" />
+                  <Label text="LOGIN" style="-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #000000;" />
                </children>
             </VBox>
 
