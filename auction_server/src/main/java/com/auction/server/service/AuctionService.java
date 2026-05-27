@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AuctionService {
-
+    private static long nextAuctionId = 1;
     private static final List<Auction> auctionList = new ArrayList<>();
 
     private final BidService bidService = new BidService();
@@ -25,8 +25,13 @@ public class AuctionService {
     }
 
     public synchronized void addAuction(Auction auction) {
+        // Tự động gán ID nếu chưa có
+        if (auction.getId() == null) {
+            auction.setId(nextAuctionId++);
+        }
         auctionList.add(auction);
-        System.out.println("Đã thêm phiên đấu giá mới vào hệ thống hệ thống!");
+        System.out.println("[AuctionService] Đã thêm auction ID=" + auction.getId() + ". Tổng số: " + auctionList.size());
+        System.out.println("[AuctionService] Status: " + auction.getStatus());
     }
 
     public synchronized boolean startAuction(Auction auction) {
@@ -84,5 +89,28 @@ public class AuctionService {
         auction.setStatus(AuctionStatus.CANCELED);
         System.out.println("Auction canceled!");
         return true;
+    }
+    public synchronized List<Auction> getPendingAuctions() {
+        List<Auction> pending = new ArrayList<>();
+        System.out.println("[AuctionService] Tổng số auction trong hệ thống: " + auctionList.size());
+        for (Auction a : auctionList) {
+            System.out.println("[AuctionService] Auction " + a.getId() + " - Status: " + a.getStatus());
+            if (a.getStatus() == AuctionStatus.ONQUEUE) {
+                pending.add(a);
+            }
+        }
+        System.out.println("[AuctionService] Số auction ONQUEUE: " + pending.size());
+        return pending;
+    }
+
+    public synchronized boolean approveAuction(long auctionId) {
+        for (Auction a : auctionList) {
+            if (a.getId() == auctionId && a.getStatus() == AuctionStatus.ONQUEUE) {
+                a.setStatus(AuctionStatus.OPEN);
+                System.out.println("Đã duyệt auction: " + auctionId);
+                return true;
+            }
+        }
+        return false;
     }
 }

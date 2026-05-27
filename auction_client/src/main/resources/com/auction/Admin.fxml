@@ -22,10 +22,10 @@
         </Label>
         <HBox alignment="CENTER_RIGHT" spacing="8.0" HBox.hgrow="ALWAYS">
             <Button mnemonicParsing="false" onAction="#handleProfile" style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-weight: bold;" text="Profile" />
+            <Button mnemonicParsing="false" onAction="#handleLogout" style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-weight: bold;" text="Đăng Xuất" />
             <Button fx:id="btnRefresh" mnemonicParsing="false" style="-fx-background-color: #007bff; -fx-text-fill: white;" text="Làm mới dữ liệu (Refresh)" />
         </HBox>
     </HBox>
-
     <Label text="Quản lý Người Dùng">
         <font>
             <Font name="System Bold" size="16.0" />
@@ -43,7 +43,29 @@
             <TableColumn prefWidth="150.0" text="Số Dư ($)" />
         </columns>
     </TableView>
+    <VBox spacing="10.0" style="-fx-border-color: #cccccc; -fx-border-radius: 5; -fx-padding: 15;">
+        <Label text="Duyệt phiên đấu giá chờ" textFill="#333333">
+            <font>
+                <Font name="System Bold" size="16.0" />
+            </font>
+        </Label>
 
+        <HBox spacing="10.0">
+            <Button fx:id="btnRefreshPending" text="Tải lại"
+                    style="-fx-background-color: #3498db; -fx-text-fill: white;" />
+            <Button fx:id="btnApprove" text="Duyệt"
+                    style="-fx-background-color: #28a745; -fx-text-fill: white; -fx-font-weight: bold;" />
+        </HBox>
+
+        <TableView fx:id="tablePendingAuctions" prefHeight="300.0" VBox.vgrow="ALWAYS">
+            <columns>
+                <TableColumn prefWidth="75.0" text="ID" />
+                <TableColumn prefWidth="250.0" text="Tên Sản Phẩm" />
+                <TableColumn prefWidth="150.0" text="Giá Khởi Điểm" />
+                <TableColumn prefWidth="150.0" text="Trạng Thái" />
+            </columns>
+        </TableView>
+    </VBox>
     <HBox alignment="BOTTOM_LEFT" spacing="20.0">
         <Label text="Quản lý Phiên Đấu Giá">
             <font>

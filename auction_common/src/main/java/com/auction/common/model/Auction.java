@@ -12,7 +12,14 @@ public class Auction {
     private double currentPrice;
     private AuctionStatus status;
     private LocalDateTime endTime;
+    private int sellerId;
+    public int getSellerId() {
+        return sellerId;
+    }
 
+    public void setSellerId(int sellerId) {
+        this.sellerId = sellerId;
+    }
     public Auction(Item item, double startPrice) {
         this.item = item;
         this.currentPrice = startPrice;
