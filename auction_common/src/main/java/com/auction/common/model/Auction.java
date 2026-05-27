@@ -2,15 +2,26 @@ package com.auction.common.model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.time.LocalDateTime;
 
 public class Auction {
+    private LocalDateTime endTime;
 
-    private Long id;
+    public LocalDateTime getEndTime() { return endTime; }
+    public void setEndTime(LocalDateTime endTime) { this.endTime = endTime; }
+    private Long id; // Added an ID field
     private Item item;
     private List<Bid> bids;
     private double currentPrice;
     private AuctionStatus status;
+    private int sellerId;
+    public int getSellerId() {
+        return sellerId;
+    }
 
+    public void setSellerId(int sellerId) {
+        this.sellerId = sellerId;
+    }
     public Auction(Item item, double startPrice) {
         this.item = item;
         this.currentPrice = startPrice;
@@ -18,10 +29,13 @@ public class Auction {
         this.status = AuctionStatus.OPEN;
     }
 
-    // Getters and Setters
-
+    public boolean isEnded() {
+        return this.status == AuctionStatus.FINISHED ||
+               this.status == AuctionStatus.CANCELED ||
+               this.status == AuctionStatus.PAID;
+    }
     public Long getId() {
-        return (long)100;
+        return id;
     }
 
     public void setId(Long id) {

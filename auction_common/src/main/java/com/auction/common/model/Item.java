@@ -22,4 +22,11 @@ public abstract class Item {
     public void addBid(Bid newBid) {
         this.bidHistory.add(newBid);
     }
+    protected String imagePath;
+    public String getImagePath() {
+        return imagePath;
+    }
+    public void setImagePath(String imagePath) {
+        this.imagePath = imagePath;
+    }
 }

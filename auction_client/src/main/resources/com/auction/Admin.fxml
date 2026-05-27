@@ -1,14 +1,90 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import java.util.*?>
-<?import javafx.scene.*?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
 
-<AnchorPane xmlns="http://javafx.com/javafx"
-            xmlns:fx="http://javafx.com/fxml"
-            fx:controller="CONTROLLER_NAME"
-            prefHeight="400.0" prefWidth="600.0">
+<VBox prefHeight="700.0" prefWidth="900.0" spacing="15.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.controller.AdminController">
+    <padding>
+        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+    </padding>
 
-</AnchorPane>
+    <HBox alignment="CENTER_LEFT" spacing="20.0">
+        <Label text="Hệ thống Quản Trị (Admin Panel)" HBox.hgrow="ALWAYS">
+            <font>
+                <Font name="System Bold" size="24.0" />
+            </font>
+        </Label>
+        <HBox alignment="CENTER_RIGHT" spacing="8.0" HBox.hgrow="ALWAYS">
+            <Button mnemonicParsing="false" onAction="#handleProfile" style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-weight: bold;" text="Profile" />
+            <Button mnemonicParsing="false" onAction="#handleLogout" style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-weight: bold;" text="Đăng Xuất" />
+            <Button fx:id="btnRefresh" mnemonicParsing="false" style="-fx-background-color: #007bff; -fx-text-fill: white;" text="Làm mới dữ liệu (Refresh)" />
+        </HBox>
+    </HBox>
+    <Label text="Quản lý Người Dùng">
+        <font>
+            <Font name="System Bold" size="16.0" />
+        </font>
+        <VBox.margin>
+            <Insets top="10.0" />
+        </VBox.margin>
+    </Label>
+    <TableView fx:id="tableUsers" prefHeight="250.0" VBox.vgrow="SOMETIMES">
+        <columns>
+            <TableColumn prefWidth="75.0" text="ID" />
+            <TableColumn prefWidth="200.0" text="Tên Đăng Nhập" />
+            <TableColumn prefWidth="250.0" text="Email" />
+            <TableColumn prefWidth="150.0" text="Chức Vụ (Role)" />
+            <TableColumn prefWidth="150.0" text="Số Dư ($)" />
+        </columns>
+    </TableView>
+    <VBox spacing="10.0" style="-fx-border-color: #cccccc; -fx-border-radius: 5; -fx-padding: 15;">
+        <Label text="Duyệt phiên đấu giá chờ" textFill="#333333">
+            <font>
+                <Font name="System Bold" size="16.0" />
+            </font>
+        </Label>
+
+        <HBox spacing="10.0">
+            <Button fx:id="btnRefreshPending" text="Tải lại"
+                    style="-fx-background-color: #3498db; -fx-text-fill: white;" />
+            <Button fx:id="btnApprove" text="Duyệt"
+                    style="-fx-background-color: #28a745; -fx-text-fill: white; -fx-font-weight: bold;" />
+        </HBox>
+
+        <TableView fx:id="tablePendingAuctions" prefHeight="300.0" VBox.vgrow="ALWAYS">
+            <columns>
+                <TableColumn prefWidth="75.0" text="ID" />
+                <TableColumn prefWidth="250.0" text="Tên Sản Phẩm" />
+                <TableColumn prefWidth="150.0" text="Giá Khởi Điểm" />
+                <TableColumn prefWidth="150.0" text="Trạng Thái" />
+            </columns>
+        </TableView>
+    </VBox>
+    <HBox alignment="BOTTOM_LEFT" spacing="20.0">
+        <Label text="Quản lý Phiên Đấu Giá">
+            <font>
+                <Font name="System Bold" size="16.0" />
+            </font>
+            <HBox.margin>
+                <Insets top="15.0" />
+            </HBox.margin>
+        </Label>
+        <Button fx:id="btnCancelAuction" mnemonicParsing="false" style="-fx-background-color: #dc3545; -fx-text-fill: white; -fx-font-weight: bold;" text="Hủy Phiên Vi Phạm" />
+    </HBox>
+
+    <TableView fx:id="tableAllAuctions" prefHeight="250.0" VBox.vgrow="SOMETIMES">
+        <columns>
+            <TableColumn prefWidth="75.0" text="ID Phiên" />
+            <TableColumn prefWidth="250.0" text="Tên Sản Phẩm" />
+            <TableColumn prefWidth="150.0" text="Giá Cao Nhất" />
+            <TableColumn prefWidth="150.0" text="Người Giữ Giá" />
+            <TableColumn prefWidth="150.0" text="Trạng Thái" />
+        </columns>
+    </TableView>
+</VBox>

@@ -9,7 +9,7 @@ public class Bidder extends User {
 
     // Constructor khi đã có số dư (từ database)
     public Bidder(int userid, String username, String email, double balance) {
-        super(userid, username, email, "USER");
+        super(userid, username, email, "BIDDER");
         this.balance = balance;
         this.bidHistory = new ArrayList<>();
     }

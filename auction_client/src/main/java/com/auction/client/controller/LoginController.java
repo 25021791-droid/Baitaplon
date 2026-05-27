@@ -29,8 +29,7 @@ public class LoginController implements Initializable {
         NetworkClientService.getInstance().setOnLoginSuccess(loggedInUser -> {
             javafx.application.Platform.runLater(() -> {
                 try {
-                    messageLabel.setText("Login success!");
-                    messageLabel.setStyle("-fx-text-fill: green;");
+                    showMessage("Login success!", "green");
 
                     UserSession.setUser(loggedInUser);
 
@@ -50,10 +49,16 @@ public class LoginController implements Initializable {
 
         NetworkClientService.getInstance().setOnLoginFail(errorMessage -> {
             javafx.application.Platform.runLater(() -> {
-                messageLabel.setText(errorMessage);
-                messageLabel.setStyle("-fx-text-fill: red;");
+                showMessage(errorMessage, "red");
             });
         });
+    }
+
+    private void showMessage(String message, String color) {
+        messageLabel.setVisible(true);
+        messageLabel.setManaged(true);
+        messageLabel.setText(message);
+        messageLabel.setStyle("-fx-text-fill: " + color + ";");
     }
 
     @FXML
@@ -62,13 +67,16 @@ public class LoginController implements Initializable {
         String pass = passwordField.getText();
 
         if (user.isEmpty() || pass.isEmpty()) {
-            messageLabel.setText("You have not entered your account or password.");
-            messageLabel.setStyle("-fx-text-fill: red;");
+            showMessage("You have not entered your account or password.", "red");
             return;
         }
 
-        messageLabel.setText("Logging in...");
-        messageLabel.setStyle("-fx-text-fill: black;");
+        if (!NetworkClientService.getInstance().isConnected()) {
+            showMessage("Cannot connect to server. Start the server first.", "red");
+            return;
+        }
+
+        showMessage("Logging in...", "black");
 
         NetworkClientService.getInstance().login(user, pass);
     }

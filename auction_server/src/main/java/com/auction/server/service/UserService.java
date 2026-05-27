@@ -10,6 +10,7 @@ import java.sql.*;
 public class UserService {
     public static User login(String username, String password) {
         String query = "SELECT * FROM users WHERE username = ?";
+        System.out.println("[Server] Login start: " + username);
 
         try (Connection conn = DatabaseService.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(query)) {
@@ -22,8 +23,12 @@ public class UserService {
 
                 String storedHash = rs.getString("password");
                 System.out.println("[DEBUG SERVER] -> Độ dài chuỗi mật khẩu trong DB: " + storedHash.length());
+                System.out.println("[Server] Login password length: " + password.length());
 
-                if (PasswordService.checkPassword(password, storedHash)) {
+                boolean passwordMatches = PasswordService.checkPassword(password, storedHash);
+                System.out.println("[Server] Password match: " + passwordMatches);
+
+                if (passwordMatches) {
                     System.out.println("[DEBUG SERVER] -> Mật khẩu TRÙNG KHỚP!");
                     String role = rs.getString("role");
                     int id = rs.getInt("id");
@@ -54,18 +59,70 @@ public class UserService {
     public boolean register(String username, String rawPassword, String email, String role) {
         String sql = "INSERT INTO users (username, password, email, role, balance) VALUES (?, ?, ?, ?, ?)";
 
+        System.out.println("[Server] Hashing password...");
         String hashedPass = PasswordService.hashPassword(rawPassword);
+        System.out.println("[Server] Opening database connection...");
 
         try (Connection conn = DatabaseService.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
+            System.out.println("[Server] Inserting user...");
             pstmt.setString(1, username);
             pstmt.setString(2, hashedPass);
             pstmt.setString(3, email);
             pstmt.setString(4, role);
             pstmt.setDouble(5, 0.0);
 
+            boolean success = pstmt.executeUpdate() > 0;
+            System.out.println("[Server] Insert finished.");
+            return success;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean updateProfile(int userId, String username, String email) {
+        String sql = "UPDATE users SET username = ?, email = ? WHERE id = ?";
+
+        try (Connection conn = DatabaseService.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, username);
+            pstmt.setString(2, email);
+            pstmt.setInt(3, userId);
+
             return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean changePassword(int userId, String currentPassword, String newPassword) {
+        String selectSql = "SELECT password FROM users WHERE id = ?";
+        String updateSql = "UPDATE users SET password = ? WHERE id = ?";
+
+        try (Connection conn = DatabaseService.getConnection();
+             PreparedStatement selectStmt = conn.prepareStatement(selectSql)) {
+
+            selectStmt.setInt(1, userId);
+            ResultSet rs = selectStmt.executeQuery();
+
+            if (!rs.next()) {
+                return false;
+            }
+
+            String storedHash = rs.getString("password");
+            if (!PasswordService.checkPassword(currentPassword, storedHash)) {
+                return false;
+            }
+
+            try (PreparedStatement updateStmt = conn.prepareStatement(updateSql)) {
+                updateStmt.setString(1, PasswordService.hashPassword(newPassword));
+                updateStmt.setInt(2, userId);
+                return updateStmt.executeUpdate() > 0;
+            }
         } catch (SQLException e) {
             e.printStackTrace();
             return false;

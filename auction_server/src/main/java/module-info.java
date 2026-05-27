@@ -4,6 +4,7 @@ module auction_server {
     requires javafx.fxml;
     requires java.sql;
     requires jbcrypt;
+    requires protobuf.java;
 
     opens com.auction.server.observer;
 
