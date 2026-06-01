@@ -71,7 +71,7 @@ public class UserService {
             pstmt.setString(2, hashedPass);
             pstmt.setString(3, email);
             pstmt.setString(4, role);
-            pstmt.setDouble(5, 0.0);
+            pstmt.setDouble(5, 100000.0);
 
             boolean success = pstmt.executeUpdate() > 0;
             System.out.println("[Server] Insert finished.");

@@ -3,7 +3,7 @@ package com.auction.common.model;
 import java.util.List;
 import java.util.ArrayList;
 
-public abstract class Item {
+public class Item {
     protected int id;
     protected String name;
     protected List<Bid> bidHistory;
@@ -16,6 +16,10 @@ public abstract class Item {
     public int getId() {
         return this.id;
     }
+    public void setId(int id) {
+        this.id = id;
+    }
+
     public String getName() {
         return this.name;
     }

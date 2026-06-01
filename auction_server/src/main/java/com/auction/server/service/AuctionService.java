@@ -8,30 +8,34 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AuctionService {
-    private static long nextAuctionId = 1;
-    private static final List<Auction> auctionList = new ArrayList<>();
+    private final AuctionRepository auctionRepository = new AuctionRepository();
 
     private final BidService bidService = new BidService();
     private final UserService userService = new UserService();
 
+    // -- Lấy danh sách auction đang chạy
     public synchronized List<Auction> getActiveAuctions() {
-        List<Auction> activeAuctions = new ArrayList<>();
-        for (Auction auction : auctionList) {
-            if (auction.getStatus() == AuctionStatus.RUNNING) {
-                activeAuctions.add(auction);
-            }
-        }
-        return activeAuctions;
+        return auctionRepository.getAuctionsByStatus(AuctionStatus.RUNNING);
     }
 
+    // -- Lấy danh sách auction đang chờ duyệt
+    public synchronized List<Auction> getPendingAuctions() {
+        return auctionRepository.getAuctionsByStatus(AuctionStatus.ONQUEUE);
+    }
+
+    // -- Lấy danh sách auction theo người bán
+    public synchronized List<Auction> getAuctionsBySellerId(int sellerId) {
+        return auctionRepository.getAuctionsBySellerId(sellerId);
+    }
+
+    // -- Thêm auction vào DB
     public synchronized void addAuction(Auction auction) {
-        // Tự động gán ID nếu chưa có
-        if (auction.getId() == null) {
-            auction.setId(nextAuctionId++);
+        boolean success = auctionRepository.addAuctionToRepo(auction);
+        if (success) {
+            System.out.println("[AuctionService] Đã lưu thành công auction ID=" + auction.getId() + " vào DB.");
+        } else {
+            System.out.println("[AuctionService] Thất bại khi lưu auction vào DB!");
         }
-        auctionList.add(auction);
-        System.out.println("[AuctionService] Đã thêm auction ID=" + auction.getId() + ". Tổng số: " + auctionList.size());
-        System.out.println("[AuctionService] Status: " + auction.getStatus());
     }
 
     public synchronized boolean startAuction(Auction auction) {
@@ -90,35 +94,12 @@ public class AuctionService {
         System.out.println("Auction canceled!");
         return true;
     }
-    public synchronized List<Auction> getPendingAuctions() {
-        List<Auction> pending = new ArrayList<>();
-        System.out.println("[AuctionService] Tổng số auction trong hệ thống: " + auctionList.size());
-        for (Auction a : auctionList) {
-            System.out.println("[AuctionService] Auction " + a.getId() + " - Status: " + a.getStatus());
-            if (a.getStatus() == AuctionStatus.ONQUEUE) {
-                pending.add(a);
-            }
-        }
-        System.out.println("[AuctionService] Số auction ONQUEUE: " + pending.size());
-        return pending;
-    }
-    public synchronized List<Auction> getAuctionsBySellerId(int sellerId) {
-        List<Auction> result = new ArrayList<>();
-        for (Auction a : auctionList) {
-            if (a.getSellerId() == sellerId) {
-                result.add(a);
-            }
-        }
-        return result;
-    }
+
     public synchronized boolean approveAuction(long auctionId) {
-        for (Auction a : auctionList) {
-            if (a.getId() == auctionId && a.getStatus() == AuctionStatus.ONQUEUE) {
-                a.setStatus(AuctionStatus.RUNNING);
-                System.out.println("[Server] Admin đã duyệt + bắt đầu auction ID: " + auctionId);
-                return true;
-            }
+        boolean success = auctionRepository.updateStatus(auctionId, AuctionStatus.RUNNING);
+        if (success) {
+            System.out.println("[Server] Admin đã duyệt + bắt đầu dữ liệu trong DB cho auction ID: " + auctionId);
         }
-        return false;
+        return success;
     }
 }

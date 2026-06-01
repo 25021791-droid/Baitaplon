@@ -139,7 +139,7 @@ public class NetworkClientService {
                             for (String raw : parts[1].split(";")) {
                                 String[] d = raw.split("\\|");
                                 if (d.length >= 4) {
-                                    Auction a = new Auction(new Electronics(0, d[1]), Double.parseDouble(d[2]));
+                                    Auction a = new Auction(new Item(0, d[1]), Double.parseDouble(d[2]));
                                     a.setId(Long.parseLong(d[0]));
                                     a.setStatus(AuctionStatus.valueOf(d[3]));
                                     list.add(a);
@@ -170,7 +170,7 @@ public class NetworkClientService {
                                 String itemName = data[1];
                                 double currentPrice = Double.parseDouble(data[2]);
 
-                                Item item = new Electronics((int) auctionId, itemName);
+                                Item item = new Item((int) auctionId, itemName);
                                 Auction auction = new Auction(item, currentPrice);
                                 auction.setId(auctionId);
                                 auction.setCurrentPrice(currentPrice);
@@ -211,7 +211,7 @@ public class NetworkClientService {
 
                                     double currentPrice = Double.parseDouble(priceStr);
 
-                                    Item item = new Electronics((int) auctionId, itemName);
+                                    Item item = new Item((int) auctionId, itemName);
                                     Auction auction = new Auction(item, currentPrice);
                                     auction.setId(auctionId);
                                     auction.setCurrentPrice(currentPrice);

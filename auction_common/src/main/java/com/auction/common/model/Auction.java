@@ -5,26 +5,24 @@ import java.util.List;
 import java.time.LocalDateTime;
 
 public class Auction {
-    private LocalDateTime endTime;
+    private LocalDateTime startTime = LocalDateTime.now();
+    private LocalDateTime endTime = LocalDateTime.now().plusHours(24);
 
-    public LocalDateTime getEndTime() { return endTime; }
-    public void setEndTime(LocalDateTime endTime) { this.endTime = endTime; }
     private Long id; // Added an ID field
     private Item item;
     private List<Bid> bids;
+    private double startingPrice;
     private double currentPrice;
     private AuctionStatus status;
     private int sellerId;
-    public int getSellerId() {
-        return sellerId;
+    private int winnerId;
+
+    public Auction() {
     }
 
-    public void setSellerId(int sellerId) {
-        this.sellerId = sellerId;
-    }
     public Auction(Item item, double startPrice) {
         this.item = item;
-        this.currentPrice = startPrice;
+        this.startingPrice = startPrice;
         this.bids = new ArrayList<>();
         this.status = AuctionStatus.OPEN;
     }
@@ -37,7 +35,6 @@ public class Auction {
     public Long getId() {
         return id;
     }
-
     public void setId(Long id) {
         this.id = id;
     }
@@ -45,7 +42,6 @@ public class Auction {
     public Item getItem() {
         return item;
     }
-
     public void setItem(Item item) {
         this.item = item;
     }
@@ -53,15 +49,20 @@ public class Auction {
     public List<Bid> getBids() {
         return bids;
     }
-
     public void setBids(List<Bid> bids) {
         this.bids = bids;
+    }
+
+    public double getStartingPrice() {
+        return startingPrice;
+    }
+    public void setStartingPrice(double price) {
+        this.startingPrice = price;
     }
 
     public double getCurrentPrice() {
         return currentPrice;
     }
-
     public void setCurrentPrice(double price) {
         this.currentPrice = price;
     }
@@ -69,8 +70,27 @@ public class Auction {
     public AuctionStatus getStatus() {
         return status;
     }
-
     public void setStatus(AuctionStatus status) {
         this.status = status;
     }
+
+    public int getSellerId() {
+        return sellerId;
+    }
+    public void setSellerId(int sellerId) {
+        this.sellerId = sellerId;
+    }
+
+    public int getWinnerId() {
+        return winnerId;
+    }
+    public void setWinnerId(int winnerId) {
+        this.winnerId = winnerId;
+    }
+
+    public LocalDateTime getStartTime() { return startTime; }
+    public void setStartTime(LocalDateTime startTime) { this.startTime = startTime; }
+
+    public LocalDateTime getEndTime() { return endTime; }
+    public void setEndTime(LocalDateTime endTime) { this.endTime = endTime; }
 }
