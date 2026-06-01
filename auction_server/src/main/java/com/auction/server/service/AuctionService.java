@@ -23,6 +23,11 @@ public class AuctionService {
         return auctionRepository.getAuctionsByStatus(AuctionStatus.ONQUEUE);
     }
 
+    // -- Lấy danh sách auction đã end
+    public synchronized List<Auction> getEndedAuctions() {
+        return auctionRepository.getAuctionsByStatus(AuctionStatus.FINISHED);
+    }
+
     // -- Lấy danh sách auction theo người bán
     public synchronized List<Auction> getAuctionsBySellerId(int sellerId) {
         return auctionRepository.getAuctionsBySellerId(sellerId);
@@ -102,15 +107,5 @@ public class AuctionService {
         }
         return success;
     }
-    public synchronized List<Auction> getEndedAuctions() {
-        List<Auction> ended = new ArrayList<>();
-        for (Auction a : auctionList) {
-            if (a.getStatus() == AuctionStatus.FINISHED ||
-                    a.getStatus() == AuctionStatus.CANCELED ||
-                    a.getStatus() == AuctionStatus.PAID) {
-                ended.add(a);
-            }
-        }
-        return ended;
-    }
+
 }
