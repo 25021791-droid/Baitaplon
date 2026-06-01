@@ -88,15 +88,11 @@ public class AuctionService {
         return true;
     }
 
-    public synchronized boolean cancelAuction(Auction auction) {
-        if (auction.getStatus() == AuctionStatus.FINISHED ||
-                auction.getStatus() == AuctionStatus.PAID) {
-            System.out.println("Cannot cancel finished or paid auction!");
-            return false;
+    public synchronized boolean cancelAuction(Long auctionId) {
+        boolean success = auctionRepository.updateStatus(auctionId, AuctionStatus.CANCELED);
+        if (success) {
+            System.out.println("Auction canceled!");
         }
-
-        auction.setStatus(AuctionStatus.CANCELED);
-        System.out.println("Auction canceled!");
         return true;
     }
 

@@ -237,7 +237,7 @@ public class ClientHandler implements Runnable {
                     System.out.println("[Server] Kết quả hủy: " + ok);
                     out.writeUTF(ok ? "CANCEL_AUCTION_SUCCESS" : "CANCEL_AUCTION_FAIL");
                     out.flush();
-                    
+
                 } else if ("LOGOUT".equals(command)) {
                     out.writeUTF("GOODBYE");
                     out.flush();
