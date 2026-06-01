@@ -122,8 +122,21 @@ public class ClientHandler implements Runnable {
                     }
                     out.writeUTF(responseBuilder.toString());
                     out.flush();
-
-                } else if ("CREATE_AUCTION".equals(command)) {
+                }
+                else if ("GET_ENDED_AUCTIONS".equals(command)) {
+                    List<Auction> ended = auctionService.getEndedAuctions();
+                    StringBuilder sb = new StringBuilder("ENDED_AUCTIONS,");
+                    for (int i = 0; i < ended.size(); i++) {
+                        Auction a = ended.get(i);
+                        sb.append(a.getId()).append("|")
+                                .append(a.getItem().getName()).append("|")
+                                .append(String.format(Locale.US, "%.2f", a.getCurrentPrice())).append("|")
+                                .append(a.getStatus().toString());
+                        if (i < ended.size() - 1) sb.append(";");
+                    }
+                    out.writeUTF(sb.toString());
+                    out.flush();
+                }else if ("CREATE_AUCTION".equals(command)) {
                     String itemName = parts[1];
                     double startPrice = Double.parseDouble(parts[2]);
                     int sellerId = Integer.parseInt(parts[3]);
@@ -209,11 +222,22 @@ public class ClientHandler implements Runnable {
 
                 } else if ("APPROVE_AUCTION".equals(command)) {
                     long auctionId = Long.parseLong(parts[1]);
-                    boolean ok = auctionService.approveAuction(auctionId);
-                    out.writeUTF(ok ? "APPROVE_SUCCESS" : "APPROVE_FAIL");
-                    out.flush();
+                    System.out.println("[Server] Admin duyệt auction ID: " + auctionId);
 
-                } else if ("LOGOUT".equals(command)) {
+                    boolean ok = auctionService.approveAuction(auctionId);
+                    out.writeUTF(ok ? "APPROVE_AUCTION_SUCCESS" : "APPROVE_AUCTION_FAIL");  // ← SỬA
+                    out.flush();
+                    System.out.println("[Server] Kết quả duyệt: " + ok);
+                }
+                else if ("CANCEL_AUCTION".equals(command)) {   // ← PHẢI CÓ ELSE IF
+                    long auctionId = Long.parseLong(parts[1]);
+                    System.out.println("[Server] ===== NHẬN CANCEL_AUCTION: " + auctionId + " =====");
+                    boolean ok = auctionService.cancelAuction(auctionId);
+                    System.out.println("[Server] Kết quả hủy: " + ok);
+                    out.writeUTF(ok ? "CANCEL_AUCTION_SUCCESS" : "CANCEL_AUCTION_FAIL");
+                    out.flush();
+                }
+                else if ("LOGOUT".equals(command)) {
                     out.writeUTF("GOODBYE");
                     out.flush();
                     isRunning = false;

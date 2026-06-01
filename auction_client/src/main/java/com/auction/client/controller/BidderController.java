@@ -13,7 +13,7 @@ import javafx.scene.layout.FlowPane;
 import javafx.util.Duration;
 import java.net.URL;
 import java.util.List;
-import java.util.ResourceBundle;
+import java.util.ResourceBundle;import javafx.application.Platform;import javafx.scene.Parent;import java.io.IOException;
 
 public class BidderController implements Initializable {
 
@@ -54,7 +54,11 @@ public class BidderController implements Initializable {
         networkService.setOnActiveAuctionsReceived(auctionList -> {
             updateCardGrid(auctionList);
         });
+        networkService.setOnEndedAuctionsReceived(auctions -> {
+            updateEndedCards(auctions);
+        });
 
+        networkService.requestEndedAuctions();
         networkService.requestActiveAuctions();
     }
 
@@ -103,6 +107,26 @@ public class BidderController implements Initializable {
         }
     }
 
+    private void updateEndedCards(List<Auction> auctions) {
+        Platform.runLater(() -> {
+            flowEndedAuctions.getChildren().clear();
+            if (auctions.isEmpty()) {
+                flowEndedAuctions.getChildren().add(lblNoEnded);
+            } else {
+                for (Auction auction : auctions) {
+                    try {
+                        FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/auction/BidderCard.fxml"));
+                        Parent cardNode = loader.load();
+                        BidderCardController cardController = loader.getController();
+                        cardController.setData(auction);
+                        flowEndedAuctions.getChildren().add(cardNode);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+    }
     private void updateAuctionDetails(Auction auction) {
         lblCurrentPrice.setText("Giá hiện tại: $" + auction.getCurrentPrice());
         lblItemDescription.setText("Mô tả: " + auction.getItem().getName() + "\nTình trạng: Hoạt động tốt.");
@@ -210,9 +234,7 @@ public class BidderController implements Initializable {
     }
     @FXML
     private void handleRefresh() {
-        System.out.println("[Bidder] Làm mới danh sách auction...");
         networkService.requestActiveAuctions();
-        resultLabel.setText("Đã làm mới danh sách!");
-        resultLabel.setStyle("-fx-text-fill: green;");
+        networkService.requestEndedAuctions();
     }
 }

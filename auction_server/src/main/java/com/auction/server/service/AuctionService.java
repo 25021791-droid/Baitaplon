@@ -102,4 +102,15 @@ public class AuctionService {
         }
         return success;
     }
+    public synchronized List<Auction> getEndedAuctions() {
+        List<Auction> ended = new ArrayList<>();
+        for (Auction a : auctionList) {
+            if (a.getStatus() == AuctionStatus.FINISHED ||
+                    a.getStatus() == AuctionStatus.CANCELED ||
+                    a.getStatus() == AuctionStatus.PAID) {
+                ended.add(a);
+            }
+        }
+        return ended;
+    }
 }
