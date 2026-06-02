@@ -143,7 +143,7 @@ public class NetworkClientService {
                             for (String raw : parts[1].split(";")) {
                                 String[] d = raw.split("\\|");
                                 if (d.length >= 4) {
-                                    Auction a = new Auction(new Electronics(0, d[1]), Double.parseDouble(d[2]));
+                                    Auction a = new Auction(new Item(0, d[1]), Double.parseDouble(d[2]));
                                     a.setId(Long.parseLong(d[0]));
                                     a.setStatus(AuctionStatus.valueOf(d[3]));
                                     list.add(a);

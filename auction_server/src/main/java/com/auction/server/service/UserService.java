@@ -57,6 +57,11 @@ public class UserService {
     }
 
     public boolean register(String username, String rawPassword, String email, String role) {
+        if (isUsernameExists(username)) {
+            System.out.println("[Server] Username already exists!");
+            return false;
+        }
+
         String sql = "INSERT INTO users (username, password, email, role, balance) VALUES (?, ?, ?, ?, ?)";
 
         System.out.println("[Server] Hashing password...");
@@ -127,5 +132,26 @@ public class UserService {
             e.printStackTrace();
             return false;
         }
+    }
+
+    public boolean isUsernameExists(String username) {
+        String sql = "SELECT COUNT(*) FROM users WHERE username = ?";
+        int count = 0;
+
+        try (Connection conn = DatabaseService.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, username);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()){
+                count = rs.getInt(1);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+        return count > 0;
     }
 }
