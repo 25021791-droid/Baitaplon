@@ -103,9 +103,7 @@ public class NetworkClientService {
                         if ("ADMIN".equals(role)) user = new Admin(id, name, email);
                         else if ("SELLER".equals(role)) user = new Seller(id, name, email);
                         else {
-                            Bidder bidder = new Bidder(id, name, email);
-                            bidder.setBalance(balance);
-                            user = bidder;
+                            user = new Bidder(id, name, email, balance);
                         }
 
                         if (onLoginSuccess != null) {

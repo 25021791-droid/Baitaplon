@@ -15,7 +15,7 @@ public class Bidder extends User {
     }
     // Constructor khi tạo tk mới
     public Bidder(int userid, String username, String email) {
-        this(userid, username, email, 1000000000000.0);
+        this(userid, username, email, 100000.0);
     }
 
     public double getBalance() { return balance; }

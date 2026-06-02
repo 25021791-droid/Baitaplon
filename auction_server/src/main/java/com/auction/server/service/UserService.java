@@ -39,7 +39,7 @@ public class UserService {
                     if ("ADMIN".equals(role)) {
                         return new Admin(id, name, email);
                     } else if ("BIDDER".equals(role)) {
-                        return new Bidder(id, name, email);
+                        return new Bidder(id, name, email, balance);
                     } else {
                         return new Seller(id, name, email);
                     }
