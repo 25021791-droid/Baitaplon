@@ -8,7 +8,7 @@ public class Auction {
     private LocalDateTime startTime = LocalDateTime.now();
     private LocalDateTime endTime = LocalDateTime.now().plusHours(24);
 
-    private Long id; // Added an ID field
+    private int id; // Added an ID field
     private Item item;
     private List<Bid> bids;
     private double startingPrice;
@@ -32,10 +32,11 @@ public class Auction {
                this.status == AuctionStatus.CANCELED ||
                this.status == AuctionStatus.PAID;
     }
-    public Long getId() {
+
+    public int getId() {
         return id;
     }
-    public void setId(Long id) {
+    public void setId(int id) {
         this.id = id;
     }
 

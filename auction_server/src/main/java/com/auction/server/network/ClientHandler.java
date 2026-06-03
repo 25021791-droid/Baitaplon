@@ -1,15 +1,16 @@
 package com.auction.server.network;
-import com.auction.common.model.Item;
-import com.auction.common.model.AuctionStatus;
+import com.auction.common.model.*;
+
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Locale;
 import java.io.File;
-import com.auction.common.model.Auction;
+
 import com.auction.server.service.AuctionRepository;
 import com.auction.server.service.AuctionService;
 import com.auction.server.service.ItemRepository;
 import com.auction.server.service.UserService;
-import com.auction.common.model.User;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.net.Socket;
@@ -66,8 +67,28 @@ public class ClientHandler implements Runnable {
                     }
 
                 } else if ("BID".equals(command)) {
-                    out.writeUTF("BID_OK");
-                    out.flush();
+                    int auctionId = Integer.parseInt(parts[1]);
+                    int userId = Integer.parseInt(parts[2]);
+                    double bidAmount = Double.parseDouble(parts[3]);
+
+                    Auction currentAuction = auctionService.getAuctionById(auctionId);
+                    Bidder currentBidder = userService.getBidderById(userId);
+
+                    if (bidAmount < currentAuction.getCurrentPrice() || bidAmount > currentBidder.getBalance()) {
+                        out.writeUTF("BID_FAILED");
+                        out.flush();
+                    } else {
+                        Bid newBid = new Bid(currentBidder, bidAmount);
+                        boolean isBidSaved = auctionService.addBid(auctionId, newBid);
+                        boolean isAuctionUpdated = auctionService.updateCurrentPrice(currentAuction, bidAmount);
+
+                        if (isBidSaved && isAuctionUpdated) {
+                            currentAuction.setCurrentPrice(bidAmount);
+                            currentAuction.getBids().add(newBid);
+                        }
+                        out.writeUTF("BID_OK");
+                        out.flush();
+                    }
 
                 } else if ("REGISTER".equals(command)) {
                     String username = parts[1];
@@ -167,13 +188,11 @@ public class ClientHandler implements Runnable {
 
 
                     ItemRepository itemRepo = new ItemRepository();
-                    AuctionRepository auctionRepo = new AuctionRepository();
-
                     boolean isItemSaved = itemRepo.addItemToRepo(item);
 
                     if (isItemSaved) {
                         System.out.println("[Server] Sản phẩm lưu thành công, nhận ID từ DB: " + newAuction.getItem().getId());
-                        auctionRepo.addAuctionToRepo(newAuction);
+                        auctionService.addAuction(newAuction);
                     } else {
                         System.out.println("[Server] Lỗi lưu sản phẩm vào bảng items, chặn đứng luồng tạo phòng.");
                     }
@@ -222,7 +241,7 @@ public class ClientHandler implements Runnable {
                     out.flush();
 
                 } else if ("APPROVE_AUCTION".equals(command)) {
-                    long auctionId = Long.parseLong(parts[1]);
+                    int auctionId = Integer.parseInt(parts[1]);
                     System.out.println("[Server] Admin duyệt auction ID: " + auctionId);
 
                     boolean ok = auctionService.approveAuction(auctionId);
@@ -231,7 +250,7 @@ public class ClientHandler implements Runnable {
                     System.out.println("[Server] Kết quả duyệt: " + ok);
 
                 } else if ("CANCEL_AUCTION".equals(command)) {   // ← PHẢI CÓ ELSE IF
-                    long auctionId = Long.parseLong(parts[1]);
+                    int auctionId = Integer.parseInt(parts[1]);
                     System.out.println("[Server] ===== NHẬN CANCEL_AUCTION: " + auctionId + " =====");
                     boolean ok = auctionService.cancelAuction(auctionId);
                     System.out.println("[Server] Kết quả hủy: " + ok);

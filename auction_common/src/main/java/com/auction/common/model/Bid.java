@@ -7,6 +7,9 @@ public class Bid {
     private double amount;
     private LocalDateTime time;
 
+    public Bid() {
+    }
+
     public Bid(Bidder bidder, double amount) {
         this.bidder = bidder;
         this.amount = amount;
@@ -16,8 +19,13 @@ public class Bid {
     public double getAmount() {
         return amount;
     }
+    public void setAmount(double amount) { this.amount = amount; }
 
     public Bidder getBidder() {
         return bidder;
     }
+    public void setBidder(Bidder b) { this.bidder = b; }
+
+    public LocalDateTime getBidTime() { return time; }
+    public void setBidTime(LocalDateTime time) { this.time = time; }
 }

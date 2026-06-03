@@ -33,25 +33,51 @@ public class AuctionService {
         return auctionRepository.getAuctionsBySellerId(sellerId);
     }
 
+    // -- Lấy object auction theo id
+    public synchronized Auction getAuctionById(int auctionId) {
+        Auction auction = auctionRepository.getAuctionById(auctionId);
+
+        if (auction != null) {
+            List<Bid> bidList = auctionRepository.getBidsByAuctionId(auctionId);
+            auction.setBids(bidList);
+        }
+        return auction;
+    }
+
+    // -- Cập nhật giá auction
+    public synchronized boolean updateCurrentPrice(Auction auction, double amount) {
+        boolean isPriceUpdated = auctionRepository.updateCurrentPrice(auction.getId(), amount);
+        if (isPriceUpdated) {
+            System.out.println("[AuctionService] Cập nhật giá tiền thành công!");
+            return true;
+        } else {
+            System.out.println("[AuctionService] Lỗi khi cập nhật giá tiền!");
+        }
+        return false;
+    }
+
     // -- Thêm auction vào DB
-    public synchronized void addAuction(Auction auction) {
+    public synchronized boolean addAuction(Auction auction) {
         boolean success = auctionRepository.addAuctionToRepo(auction);
         if (success) {
             System.out.println("[AuctionService] Đã lưu thành công auction ID=" + auction.getId() + " vào DB.");
+            return true;
         } else {
             System.out.println("[AuctionService] Thất bại khi lưu auction vào DB!");
         }
+        return false;
     }
 
-    public synchronized boolean startAuction(Auction auction) {
-        if (auction.getStatus() != AuctionStatus.OPEN) {
-            System.out.println("Auction must be OPEN to start!");
-            return false;
+    // -- Thêm bid vào DB
+    public synchronized boolean addBid(int auctionId, Bid bid) {
+        boolean success = auctionRepository.addBidToRepo(auctionId, bid);
+        if (success) {
+            System.out.println("[AuctionService] Đã lưu thành công bid vào DB.");
+            return true;
+        } else {
+            System.out.println("[AuctionService] Thất bại khi lưu bid vào DB!");
         }
-
-        auction.setStatus(AuctionStatus.RUNNING);
-        System.out.println("Auction started successfully!");
-        return true;
+        return false;
     }
 
     public synchronized void endAuction(Auction auction) {
@@ -88,7 +114,7 @@ public class AuctionService {
         return true;
     }
 
-    public synchronized boolean cancelAuction(Long auctionId) {
+    public synchronized boolean cancelAuction(int auctionId) {
         boolean success = auctionRepository.updateStatus(auctionId, AuctionStatus.CANCELED);
         if (success) {
             System.out.println("Auction canceled!");
@@ -96,7 +122,7 @@ public class AuctionService {
         return true;
     }
 
-    public synchronized boolean approveAuction(long auctionId) {
+    public synchronized boolean approveAuction(int auctionId) {
         boolean success = auctionRepository.updateStatus(auctionId, AuctionStatus.RUNNING);
         if (success) {
             System.out.println("[Server] Admin đã duyệt + bắt đầu dữ liệu trong DB cho auction ID: " + auctionId);

@@ -1,9 +1,6 @@
 package com.auction.server.service;
 
-import com.auction.common.model.Admin;
-import com.auction.common.model.Bidder;
-import com.auction.common.model.Seller;
-import com.auction.common.model.User;
+import com.auction.common.model.*;
 
 import java.sql.*;
 
@@ -153,5 +150,29 @@ public class UserService {
             return false;
         }
         return count > 0;
+    }
+
+    public Bidder getBidderById(int id) {
+        Bidder bidder = null;
+
+        String sql = "SELECT * FROM users WHERE id = ?";
+
+        try (Connection conn = DatabaseService.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, id);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    int userId = rs.getInt("id");
+                    String username = rs.getString("username");
+                    String email = rs.getString("email");
+                    bidder = new Bidder(userId, username, email);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return bidder;
     }
 }

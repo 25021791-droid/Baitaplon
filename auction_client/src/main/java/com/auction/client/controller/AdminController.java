@@ -119,8 +119,8 @@ public class AdminController implements Initializable {
         tablePendingAuctions.getColumns().clear();
         javafx.scene.control.TableColumn<Auction, String> colId = new javafx.scene.control.TableColumn<>("ID");
         colId.setCellValueFactory(cellData -> {
-            Long id = cellData.getValue().getId();
-            return new javafx.beans.property.SimpleStringProperty(id != null ? id.toString() : "N/A");
+            int id = cellData.getValue().getId();
+            return new javafx.beans.property.SimpleStringProperty(String.valueOf(id));
         });
         colId.setPrefWidth(75);
         javafx.scene.control.TableColumn<Auction, String> colName = new javafx.scene.control.TableColumn<>("Tên Sản Phẩm");

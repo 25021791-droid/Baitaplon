@@ -117,7 +117,7 @@ public class NetworkClientService {
                     else if ("BID_OK".equals(command)) {
                         if (onBidResult != null) Platform.runLater(() -> onBidResult.accept(true));
                     }
-                    else if ("BID_FAIL".equals(command)) {
+                    else if ("BID_FAILED".equals(command)) {
                         if (onBidResult != null) Platform.runLater(() -> onBidResult.accept(false));
                     }
                     else if ("NEW_BID".equals(command)) {
@@ -142,7 +142,7 @@ public class NetworkClientService {
                                 String[] d = raw.split("\\|");
                                 if (d.length >= 4) {
                                     Auction a = new Auction(new Item(0, d[1]), Double.parseDouble(d[2]));
-                                    a.setId(Long.parseLong(d[0]));
+                                    a.setId(Integer.parseInt(d[0]));
                                     a.setStatus(AuctionStatus.valueOf(d[3]));
                                     list.add(a);
                                 }
@@ -164,7 +164,7 @@ public class NetworkClientService {
                                 String[] d = raw.split("\\|");
                                 if (d.length >= 4) {
                                     Auction a = new Auction(new Item(0, d[1]), Double.parseDouble(d[2]));
-                                    a.setId(Long.parseLong(d[0]));
+                                    a.setId(Integer.parseInt(d[0]));
                                     a.setStatus(AuctionStatus.valueOf(d[3]));
                                     list.add(a);
                                 }
@@ -190,7 +190,7 @@ public class NetworkClientService {
                             for (String raw : auctionsRaw) {
                                 String[] data = raw.split("\\|");
 
-                                long auctionId = Long.parseLong(data[0]);
+                                int auctionId = Integer.parseInt(data[0]);
                                 String itemName = data[1];
                                 double currentPrice = Double.parseDouble(data[2]);
 
@@ -241,14 +241,14 @@ public class NetworkClientService {
                                     System.out.println("[Client] ID=" + idStr + " Name=" + itemName + " Price=" + priceStr);
 
                                     // Xử lý ID null
-                                    long auctionId = 0;
+                                    int auctionId = 0;
                                     if (!"null".equals(idStr) && !idStr.isEmpty()) {
-                                        auctionId = Long.parseLong(idStr);
+                                        auctionId = Integer.parseInt(idStr);
                                     }
 
                                     double currentPrice = Double.parseDouble(priceStr);
 
-                                    Item item = new Item((int) auctionId, itemName);
+                                    Item item = new Item(auctionId, itemName);
                                     Auction auction = new Auction(item, currentPrice);
                                     auction.setId(auctionId);
                                     auction.setCurrentPrice(currentPrice);
@@ -312,7 +312,7 @@ public class NetworkClientService {
         }
     }
 
-    public void placeBid(long auctionId, int userId, double amount) {
+    public void placeBid(int auctionId, int userId, double amount) {
         if (!isConnected()) {
             if (onBidResult != null) {
                 Platform.runLater(() -> onBidResult.accept(false));
@@ -476,7 +476,7 @@ public class NetworkClientService {
             e.printStackTrace();
         }
     }
-    public void cancelAuction(long auctionId) {
+    public void cancelAuction(int auctionId) {
         if (!isConnected()) return;
         try {
             out.writeUTF("CANCEL_AUCTION," + auctionId);
@@ -486,7 +486,7 @@ public class NetworkClientService {
     /**
      * Admin: Duyệt 1 auction
      */
-    public void approveAuction(long auctionId) {
+    public void approveAuction(int auctionId) {
         if (!isConnected()) return;
         try {
             out.writeUTF("APPROVE_AUCTION," + auctionId);
