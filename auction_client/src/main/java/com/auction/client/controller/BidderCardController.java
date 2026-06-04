@@ -17,7 +17,6 @@ public class BidderCardController {
         lblTitle.setText(auction.getItem().getName());
         lblPrice.setText("đ " + String.format("%,.0f", auction.getCurrentPrice()));
 
-        // Bạn có thể tùy biến thêm thuộc tính Category và Time trong class Auction của bạn
         lblCategory.setText(auction.getItem().getClass().getSimpleName().toUpperCase());
         lblTime.setText("14h 12m"); // Dữ liệu thời gian tính toán từ server
 

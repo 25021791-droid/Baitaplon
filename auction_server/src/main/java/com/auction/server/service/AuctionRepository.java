@@ -18,8 +18,8 @@ public class AuctionRepository {
 
             stmt.setInt(1, auction.getSellerId());
             stmt.setInt(2, auction.getItem().getId());
-            stmt.setDouble(3, auction.getCurrentPrice());
-            stmt.setDouble(4, auction.getCurrentPrice()); // Ban đầu current_price = starting_price
+            stmt.setDouble(3, auction.getStartingPrice());
+            stmt.setDouble(4, auction.getStartingPrice()); // Ban đầu current_price = starting_price
             stmt.setTimestamp(5, Timestamp.valueOf(auction.getStartTime()));
             stmt.setTimestamp(6, Timestamp.valueOf(auction.getEndTime()));
             stmt.setString(7, auction.getStatus().name());
