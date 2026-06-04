@@ -32,7 +32,9 @@ public class BidderCardController {
 
         lblCategory.setText(auction.getItem().getClass().getSimpleName().toUpperCase());
 
-        if (auction.getEndTime() != null) {
+        if (auction.isEnded()) {
+            lblTime.setText("Đã kết thúc");
+        } else if (auction.getEndTime() != null) {
             lblTime.setText(calculateTimeRemaining(auction.getEndTime()));
         } else {
             lblTime.setText("Không xác định");

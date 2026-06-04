@@ -206,7 +206,7 @@ public class AuctionRepository {
         List<Bid> list = new ArrayList<>();
         String sql = "SELECT b.*, u.username, u.email, u.balance FROM bids b " +
                      "INNER JOIN users u ON b.bidder_id = u.id " +
-                     "WHERE b.auction_id = ? ORDER BY b.amount ASC";
+                     "WHERE b.auction_id = ? ORDER BY b.bid_time ASC";
         try (Connection conn = DatabaseService.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, auctionId);
@@ -217,7 +217,7 @@ public class AuctionRepository {
                     String email = rs.getString("email");
                     double balance = rs.getDouble("balance");
                     Bidder bidder = new Bidder(bidderId, username, email, balance);
-                    double amount = rs.getDouble("amount");
+                    double amount = rs.getDouble("bid_amount");
                     java.time.LocalDateTime bidTime = rs.getTimestamp("bid_time").toLocalDateTime();
                     Bid bid = new Bid(bidder, amount, bidTime);
                     list.add(bid);
@@ -231,7 +231,7 @@ public class AuctionRepository {
     }
 
     public boolean addBidToRepo(int auctionId, Bid bid) {
-        String sql = "INSERT INTO bids (auction_id, bidder_id, amount, bid_time) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO bids (auction_id, bidder_id, bid_amount, bid_time) VALUES (?, ?, ?, ?)";
         try (Connection conn = DatabaseService.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, auctionId);
