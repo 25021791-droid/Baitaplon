@@ -12,6 +12,7 @@ import javafx.scene.image.*;
 import javafx.scene.layout.FlowPane;
 import javafx.util.Duration;
 import java.net.URL;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.ResourceBundle;import javafx.application.Platform;import javafx.scene.Parent;import java.io.IOException;
 
@@ -138,7 +139,6 @@ public class BidderController implements Initializable {
             System.out.println("Không tìm thấy ảnh sản phẩm mặc định.");
         }
 
-        this.secondsRemaining = 300;
         setupTimer();
     }
 
@@ -155,16 +155,27 @@ public class BidderController implements Initializable {
         if (timeline != null) {
             timeline.stop();
         }
+
         timeline = new Timeline(new KeyFrame(Duration.seconds(1), event -> {
-            secondsRemaining--;
-            if (secondsRemaining <= 0) {
+            java.time.Duration duration = java.time.Duration.between(LocalDateTime.now(), currentAuction.getEndTime());
+
+            if (duration.isNegative() || duration.isZero()) {
                 lblTimeLeft.setText("Phiên đấu giá đã kết thúc!");
+                lblTimeLeft.setStyle("-fx-text-fill: red;");
                 timeline.stop();
-                bidField.setDisable(true);
             } else {
-                int minutes = secondsRemaining / 60;
-                int seconds = secondsRemaining % 60;
-                lblTimeLeft.setText(String.format("Thời gian còn lại: %02d:%02d", minutes, seconds));
+                long hours = duration.toHours();
+                long minutes = duration.toMinutes() % 60;
+                long seconds = duration.getSeconds() % 60;
+
+
+                String timeString = "";
+                if (hours > 0) {
+                    timeString += hours + "h ";
+                }
+                timeString += String.format("%02dm %02ds", minutes, seconds);
+
+                lblTimeLeft.setText(timeString);
             }
         }));
         timeline.setCycleCount(Timeline.INDEFINITE);
