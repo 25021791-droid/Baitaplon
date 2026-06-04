@@ -58,35 +58,28 @@ public class UserService {
         }
     }
 
-    
-    public User getUserById(int userId) {
-        String query = "SELECT * FROM users WHERE id = ?";
+    public Bidder getBidderById(int id) {
+        Bidder bidder = null;
+
+        String sql = "SELECT * FROM users WHERE id = ?";
+
         try (Connection conn = DatabaseService.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(query)) {
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            pstmt.setInt(1, userId);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    String role = rs.getString("role");
-                    int id = rs.getInt("id");
-                    String name = rs.getString("username");
+            stmt.setInt(1, id);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    int userId = rs.getInt("id");
+                    String username = rs.getString("username");
                     String email = rs.getString("email");
-                    double balance = rs.getDouble("balance");
-
-                    if ("ADMIN".equals(role)) {
-                        return new Admin(id, name, email);
-                    } else if ("BIDDER".equals(role)) {
-                        return new Bidder(id, name, email, balance);
-                    } else {
-                        return new Seller(id, name, email);
-                    }
+                    bidder = new Bidder(userId, username, email);
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[Server] Lỗi khi truy vấn thông tin User theo ID: " + e.getMessage());
             e.printStackTrace();
         }
-        return null;
+        return bidder;
     }
 
     public boolean register(String username, String rawPassword, String email, String role) {

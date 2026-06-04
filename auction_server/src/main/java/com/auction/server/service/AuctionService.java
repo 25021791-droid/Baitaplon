@@ -14,61 +14,6 @@ public class AuctionService {
     private final BidService bidService = new BidService();
     private final UserService userService = new UserService();
 
-    public synchronized boolean placeBid(int auctionId, int bidderId, double bidAmount) {
-        System.out.println("[AuctionService] Đang xử lý đặt giá cho phiên: " + auctionId + " bởi User: " + bidderId);
-
-        Auction auction = auctionRepository.getAuctionById(auctionId);
-        if (auction == null) {
-            System.out.println("[AuctionService] Không tìm thấy phiên đấu giá với ID: " + auctionId);
-            return false;
-        }
-
-        
-        if (auction.getStatus() != AuctionStatus.RUNNING) {
-            System.out.println("[AuctionService] Đặt giá thất bại: Phiên đấu giá không ở trạng thái RUNNING.");
-            return false;
-        }
-
-        
-        if (bidAmount <= auction.getCurrentPrice()) {
-            System.out.println("[AuctionService] Đặt giá thất bại: Giá đặt mua phải lớn hơn giá hiện tại.");
-            return false;
-        }
-
-        
-        User user = userService.getUserById(bidderId); 
-        if (user instanceof Bidder) {
-            Bidder bidder = (Bidder) user;
-            if (bidAmount > bidder.getBalance()) {
-                System.out.println("[AuctionService] Đặt giá thất bại: Tài khoản người mua không đủ số dư.");
-                return false;
-            }
-
-            
-            auction.setCurrentPrice(bidAmount);
-
-            try {
-                Bid newBid = new Bid(bidder, bidAmount, java.time.LocalDateTime.now());
-            } catch (Exception e) {
-                System.out.println("[AuctionService] Bỏ qua ghi log chi tiết Bid: " + e.getMessage());
-            }
-
-            
-            
-            boolean isUpdated = auctionRepository.updateCurrentPrice(auctionId, bidAmount);
-            if (!isUpdated) {
-                
-                isUpdated = auctionRepository.saveOrUpdate(auction);
-            }
-
-            System.out.println("[AuctionService] Cập nhật giá mới thành công lên hệ thống: đ " + bidAmount);
-            return true;
-        }
-
-        return false;
-    }
-
-    
     public synchronized List<Auction> getActiveAuctions() {
         return auctionRepository.getAuctionsByStatus(AuctionStatus.RUNNING);
     }
@@ -111,7 +56,6 @@ public class AuctionService {
         return false;
     }
 
-    
     public synchronized boolean addAuction(Auction auction) {
         boolean success = auctionRepository.addAuctionToRepo(auction);
         if (success) {
@@ -123,7 +67,6 @@ public class AuctionService {
         return false;
     }
 
-    
     public synchronized boolean addBid(int auctionId, Bid bid) {
         boolean success = auctionRepository.addBidToRepo(auctionId, bid);
         if (success) {

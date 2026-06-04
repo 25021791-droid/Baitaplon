@@ -1,16 +1,16 @@
 package com.auction.server.network;
 
-import com.auction.common.model.Item;
-import com.auction.common.model.AuctionStatus;
+import com.auction.common.model.*;
+
 import java.util.List;
 import java.util.Locale;
 import java.io.File;
-import com.auction.common.model.Auction;
+
 import com.auction.server.service.AuctionRepository;
 import com.auction.server.service.AuctionService;
 import com.auction.server.service.ItemRepository;
 import com.auction.server.service.UserService;
-import com.auction.common.model.User;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -91,16 +91,27 @@ public class ClientHandler implements Runnable {
 
                 } else if ("BID".equals(command)) {
                     String[] parts = request.split(",");
-                    try {
-                        int auctionId = Integer.parseInt(parts[1]);
-                        int bidderId = Integer.parseInt(parts[2]);
-                        double bidAmount = Double.parseDouble(parts[3]);
+                    int auctionId = Integer.parseInt(parts[1]);
+                    int userId = Integer.parseInt(parts[2]);
+                    double bidAmount = Double.parseDouble(parts[3]);
 
-                        boolean isBidSuccess = auctionService.placeBid(auctionId, bidderId, bidAmount);
-                        sendMessage(out, isBidSuccess ? "BID_SUCCESS" : "BID_FAIL");
-                    } catch (Exception e) {
-                        System.err.println("[Server] Lỗi xử lý đặt giá: " + e.getMessage());
-                        sendMessage(out, "BID_FAIL");
+                    Auction currentAuction = auctionService.getAuctionById(auctionId);
+                    Bidder currentBidder = userService.getBidderById(userId);
+
+                    if (bidAmount < currentAuction.getCurrentPrice() || bidAmount > currentBidder.getBalance()) {
+                        out.writeUTF("BID_FAILED");
+                        out.flush();
+                    } else {
+                        Bid newBid = new Bid(currentBidder, bidAmount);
+                        boolean isBidSaved = auctionService.addBid(auctionId, newBid);
+                        boolean isAuctionUpdated = auctionService.updateCurrentPrice(currentAuction, bidAmount);
+
+                        if (isBidSaved && isAuctionUpdated) {
+                            currentAuction.setCurrentPrice(bidAmount);
+                            currentAuction.getBids().add(newBid);
+                        }
+                        out.writeUTF("BID_OK");
+                        out.flush();
                     }
 
                 } else if ("REGISTER".equals(command)) {
@@ -201,12 +212,12 @@ public class ClientHandler implements Runnable {
                     newAuction.setEndTime(LocalDateTime.now().plusDays(7));
 
                     ItemRepository itemRepo = new ItemRepository();
-                    AuctionRepository auctionRepo = new AuctionRepository();
+                    AuctionService auctionService = new AuctionService();
 
                     boolean isItemSaved = itemRepo.addItemToRepo(item);
 
                     if (isItemSaved) {
-                        boolean isAuctionSaved = auctionRepo.addAuctionToRepo(newAuction);
+                        boolean isAuctionSaved = auctionService.addAuction(newAuction);
                         sendMessage(out, isAuctionSaved ? "CREATE_AUCTION_SUCCESS" : "CREATE_AUCTION_FAIL");
                     } else {
                         sendMessage(out, "CREATE_AUCTION_FAIL");
