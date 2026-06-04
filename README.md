@@ -22,7 +22,7 @@ Hệ thống quản lý và tổ chức các phiên đấu giá trực tuyến t
 ### Yêu cầu cài đặt môi trường:
 * **Java Development Kit (JDK):** Phiên bản 11 hoặc mới hơn (Khuyến nghị JDK 17 hoặc 21).
 * **Apache Maven:** Phiên bản 3.6 trở lên.
-* **Cơ sở dữ liệu:** (Thêm tên DB bạn dùng vào đây, ví dụ: MySQL / SQLite / PostgreSQL).
+* **Cơ sở dữ liệu:** MySQL.
 
 ---
 

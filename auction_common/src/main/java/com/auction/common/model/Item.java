@@ -9,12 +9,12 @@ public class Item extends Entity<Integer> {
         super();
     }
 
-    public Item(Integer id, String name) {
+    public Item(int id, String name) {
         super(id);
         this.name = name;
     }
 
-    public Item(Integer id, String name, String imagePath) {
+    public Item(int id, String name, String imagePath) {
         super(id);
         this.name = name;
         this.imagePath = imagePath;
