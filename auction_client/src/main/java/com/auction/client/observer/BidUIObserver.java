@@ -26,7 +26,7 @@ public class BidUIObserver implements BidObserver {
         Platform.runLater(() -> {
             if (newBid != null && newBid.getBidder() != null) {
                 
-                String uiMessage = String.format("%s vừa cược: %,.0f VNĐ",
+                String uiMessage = String.format("%s vừa cược: %.0f VNĐ",
                         newBid.getBidder().getName(),
                         newBid.getAmount());
                 label.setText(uiMessage);

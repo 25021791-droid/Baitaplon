@@ -28,6 +28,7 @@ public class BidderController implements Initializable {
     @FXML private TextField bidField;
     @FXML private Label resultLabel;
     @FXML private Label lblUsername;
+    @FXML private Label lblAvatarLetter;
     @FXML private Label lblCurrentPrice;
     @FXML private Label lblBalance;
     @FXML private Label lblItemDescription;
@@ -92,7 +93,6 @@ public class BidderController implements Initializable {
                     resultLabel.setText("Đặt giá đấu thành công!");
                     resultLabel.setStyle("-fx-text-fill: green;");
                     double bidAmount = this.pendingBidAmount;
-                    // Cập nhật giá và lịch sử trong UI ngay
                     if (currentAuction != null) {
                         currentAuction.setCurrentPrice(bidAmount);
                         if (currentAuction.getBids() == null) {
@@ -151,7 +151,6 @@ public class BidderController implements Initializable {
             if (currentAuction != null) {
                 for (Auction a : auctionList) {
                     if (a.getId() == currentAuction.getId()) {
-                        // Cập nhật lại chi tiết đấu giá (giá, lịch sử, thời gian) khi danh sách được refresh
                         updateAuctionDetails(a);
                         break;
                     }
@@ -165,7 +164,10 @@ public class BidderController implements Initializable {
         if (user instanceof Bidder) {
             this.bidder = (Bidder) user;
             lblUsername.setText("User: " + bidder.getName());
-            lblBalance.setText(String.format("$%.2f", bidder.getBalance()));
+            lblBalance.setText(String.format("%.0f VNĐ", bidder.getBalance()));
+            if (lblAvatarLetter != null && bidder.getName() != null && !bidder.getName().isEmpty()) {
+                lblAvatarLetter.setText(bidder.getName().substring(0, 1).toUpperCase());
+            }
         }
     }
 
@@ -191,10 +193,9 @@ public class BidderController implements Initializable {
     }
 
     private void updateAuctionDetails(Auction auction) {
-        lblCurrentPrice.setText("Giá hiện tại: $" + auction.getCurrentPrice());
+        lblCurrentPrice.setText("Giá hiện tại: VNĐ" + auction.getCurrentPrice());
         lblItemDescription.setText("Mô tả: " + auction.getItem().getName() + "\nTình trạng: Hoạt động tốt.");
 
-        // Nạp ảnh Base64
         String base64Image = auction.getItem().getImagePath();
         if (base64Image != null && !base64Image.isEmpty() && !"NO_IMAGE".equals(base64Image)) {
             try {
@@ -209,7 +210,6 @@ public class BidderController implements Initializable {
             loadDefaultImage();
         }
 
-        // Đồng bộ lịch sử cược lên bảng TableView
         bidHistoryList.clear();
         if (auction.getBids() != null) {
             for (int i = auction.getBids().size() - 1; i >= 0; i--) {
@@ -221,6 +221,7 @@ public class BidderController implements Initializable {
                 || (auction.getEndTime() != null && java.time.LocalDateTime.now().isAfter(auction.getEndTime()));
 
         if (isEnded) {
+            // Phiên đã kết thúc: dừng timer, hiển thị trạng thái kết thúc
             if (timeline != null) {
                 timeline.stop();
                 timeline = null;
@@ -313,7 +314,6 @@ public class BidderController implements Initializable {
             resultLabel.setStyle("-fx-text-fill: red;");
             return;
         }
-        // Kiểm tra phiên đã kết thúc
         if (currentAuction.isEnded() || (currentAuction.getEndTime() != null && java.time.LocalDateTime.now().isAfter(currentAuction.getEndTime()))) {
             resultLabel.setText("Phiên đấu giá đã kết thúc, không thể đặt giá.");
             resultLabel.setStyle("-fx-text-fill: red;");
@@ -338,7 +338,6 @@ public class BidderController implements Initializable {
             resultLabel.setStyle("-fx-text-fill: blue;");
             this.pendingBidAmount = amount;
 
-            // Pause auto-refresh khi đang đặt giá
             if (this.refreshTimeline != null) {
                 this.refreshTimeline.pause();
                 System.out.println("[Bidder] Tạm dừng auto-refresh để đặt giá...");
@@ -354,7 +353,6 @@ public class BidderController implements Initializable {
             }));
             timeout.setCycleCount(1);
             timeout.play();
-            // Store the timeout so we can cancel on success/failure
             this.pendingBidTimeout = timeout;
 
             networkService.placeBid(currentAuction.getId(), bidder.getId(), amount);
@@ -390,6 +388,7 @@ public class BidderController implements Initializable {
             javafx.scene.Parent root = javafx.fxml.FXMLLoader.load(getClass().getResource("/com/auction/Login.fxml"));
             javafx.stage.Stage stage = (javafx.stage.Stage) lblUsername.getScene().getWindow();
             stage.setScene(new javafx.scene.Scene(root));
+            stage.setMaximized(false);
             stage.show();
             UserSession.cleanUserSession();
         } catch (java.io.IOException e) {

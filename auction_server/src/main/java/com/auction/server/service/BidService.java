@@ -13,6 +13,10 @@ public class BidService {
 
     private final List<BidObserver> observers = new ArrayList<>();
 
+    
+    
+    private final Lock bidLock = new ReentrantLock();
+
     public void addObserver(BidObserver observer) {
         observers.add(observer);
     }
@@ -20,6 +24,34 @@ public class BidService {
     private void notifyObservers(String message) {
         for (BidObserver observer : observers) {
             observer.update(message);
+        }
+    }
+
+    public boolean placeBid(Auction auction, Bid bid) {
+        bidLock.lock();
+
+        try {
+            if (auction.isEnded()) {
+                notifyObservers("Lỗi: Phiên đấu giá " + auction.getId() + " đã đóng!");
+                return false;
+            }
+
+            if (bid.getAmount() <= auction.getCurrentPrice()) {
+                return false; 
+            }
+
+            auction.setCurrentPrice(bid.getAmount());
+            auction.getBids().add(bid);
+
+            notifyObservers(String.format("Phiên [%d] - Cập nhật giá mới: %.0f VNĐ", auction.getId(), bid.getAmount()));
+
+            return true;
+
+        } catch (Exception e) {
+            System.err.println("Lỗi xử lý cược: " + e.getMessage());
+            return false;
+        } finally {
+            bidLock.unlock();
         }
     }
 

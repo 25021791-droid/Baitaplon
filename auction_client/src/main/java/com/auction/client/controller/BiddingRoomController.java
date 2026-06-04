@@ -87,7 +87,7 @@ public class BiddingRoomController {
             productNameLabel.setText(auction.getItem().getName());
         }
         if (currentPriceLabel != null) {
-            currentPriceLabel.setText(String.format("%,.0f VNĐ", currentHighestPrice));
+            currentPriceLabel.setText(String.format("%.0f VNĐ", currentHighestPrice));
         }
 
         
@@ -134,7 +134,7 @@ public class BiddingRoomController {
         Platform.runLater(() -> {
             this.currentHighestPrice = newPrice;
             if (currentPriceLabel != null) {
-                currentPriceLabel.setText(String.format("%,.0f VNĐ (Bởi: %s)", newPrice, topBidder));
+                currentPriceLabel.setText(String.format("%.0f VNĐ (Bởi: %s)", newPrice, topBidder));
             }
             if (timeRemainingLabel != null) {
                 timeRemainingLabel.setText(timeLeft);

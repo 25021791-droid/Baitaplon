@@ -23,7 +23,7 @@ public class BidLogger implements BidObserver {
         String bidderName = newBid.getBidder().getName();
         double amount = newBid.getAmount();
 
-        System.out.printf("[BID LOG | %s] Tài khoản '%s' vừa đặt giá: %,.0f VNĐ%n",
+        System.out.printf("[BID LOG | %s] Tài khoản '%s' vừa đặt giá: %.0f VNĐ%n",
                 timestamp, bidderName, amount);
     }
 }

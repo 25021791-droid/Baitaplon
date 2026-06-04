@@ -34,7 +34,7 @@ public class BidderCardController {
         }
 
         lblTitle.setText(auction.getItem().getName());
-        lblPrice.setText("đ " + String.format(Locale.forLanguageTag("vi-VN"), "%,.0f", auction.getCurrentPrice()));
+        lblPrice.setText("đ " + String.format(Locale.forLanguageTag("vi-VN"), "%.0f", auction.getCurrentPrice()));
         lblCategory.setText(auction.getItem().getClass().getSimpleName().toUpperCase());
 
         if (countdownTimeline != null) {

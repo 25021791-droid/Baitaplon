@@ -67,6 +67,11 @@ public class RegisterController implements Initializable {
             return;
         }
 
+        if (user.contains(",") || email.contains(",") || pass.contains(",")) {
+            showMessage("Tài khoản, email hoặc mật khẩu không được chứa dấu phẩy.", "red");
+            return;
+        }
+
         if (!pass.equals(confirmPass)) {
             showMessage("Nhập lại mật khẩu không đúng", "red");
             return;

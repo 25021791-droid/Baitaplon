@@ -70,6 +70,13 @@ public class LoginController implements Initializable {
             return;
         }
 
+        if (user.contains(",") || pass.contains(",")) {
+            messageLabel.setVisible(true);
+            messageLabel.setText("Tài khoản hoặc mật khẩu không được chứa dấu phẩy.");
+            messageLabel.setStyle("-fx-text-fill: red;");
+            return;
+        }
+
         messageLabel.setVisible(true);
         messageLabel.setText("Đang đăng nhập ...");
         messageLabel.setStyle("-fx-text-fill: black;");
@@ -89,6 +96,7 @@ public class LoginController implements Initializable {
             Stage stage = (Stage) usernameField.getScene().getWindow();
             stage.setScene(new Scene(root));
             stage.setTitle(title);
+            stage.setMaximized(true);
             stage.show();
 
         } catch (IOException e) {
