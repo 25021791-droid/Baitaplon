@@ -162,7 +162,7 @@ public class NetworkClientService {
                                 String[] d = raw.split("\\|");
                                 if (d.length >= 4) {
                                     Auction a = new Auction(new Item(0, d[1]), Double.parseDouble(d[2]));
-                                    a.setId(Long.parseLong(d[0]));
+                                    a.setId(Integer.parseInt(d[0]));
                                     a.setStatus(AuctionStatus.valueOf(d[3]));
                                     list.add(a);
                                 }
@@ -185,7 +185,7 @@ public class NetworkClientService {
                                 String[] d = raw.split("\\|");
                                 if (d.length >= 4) {
                                     Auction a = new Auction(new Item(0, d[1]), Double.parseDouble(d[2]));
-                                    a.setId(Long.parseLong(d[0]));
+                                    a.setId(Integer.parseInt(d[0]));
                                     a.setStatus(AuctionStatus.valueOf(d[3]));
                                     list.add(a);
                                 }
@@ -211,12 +211,12 @@ public class NetworkClientService {
                                 String[] data = raw.split("\\|");
 
                                 if (data.length >= 3) {
-                                    long auctionId = Long.parseLong(data[0]);
+                                    int auctionId = Integer.parseInt(data[0]);
                                     String itemName = data[1];
                                     double currentPrice = Double.parseDouble(data[2]);
                                     String base64Image = (data.length >= 4) ? data[3] : "NO_IMAGE";
 
-                                    Item item = new Item((int) auctionId, itemName) {};
+                                    Item item = new Item(auctionId, itemName) {};
                                     item.setImagePath(base64Image);
 
                                     Auction auction = new Auction(item, currentPrice);
@@ -254,14 +254,14 @@ public class NetworkClientService {
                                     String itemName = data[1];
                                     String priceStr = data[2];
 
-                                    long auctionId = 0;
+                                    int auctionId = 0;
                                     if (!"null".equals(idStr) && !idStr.isEmpty()) {
-                                        auctionId = Long.parseLong(idStr);
+                                        auctionId = Integer.parseInt(idStr);
                                     }
 
                                     double currentPrice = Double.parseDouble(priceStr);
 
-                                    Item item = new Item((int) auctionId, itemName);
+                                    Item item = new Item(auctionId, itemName);
                                     Auction auction = new Auction(item, currentPrice);
                                     auction.setId(auctionId);
                                     auction.setCurrentPrice(currentPrice);

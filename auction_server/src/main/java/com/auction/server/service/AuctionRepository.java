@@ -18,8 +18,8 @@ public class AuctionRepository {
 
             stmt.setLong(1, auction.getSellerId());
             stmt.setLong(2, auction.getItem().getId());
-            stmt.setDouble(3, auction.getCurrentPrice());
-            stmt.setDouble(4, auction.getCurrentPrice()); // Ban đầu current_price = starting_price
+            stmt.setDouble(3, auction.getStartingPrice());
+            stmt.setDouble(4, auction.getStartingPrice()); // Ban đầu current_price = starting_price
             stmt.setTimestamp(5, Timestamp.valueOf(auction.getStartTime()));
             stmt.setTimestamp(6, Timestamp.valueOf(auction.getEndTime()));
             stmt.setString(7, auction.getStatus().name());
@@ -30,7 +30,7 @@ public class AuctionRepository {
             if (affectedRows > 0) {
                 try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
                     if (generatedKeys.next()) {
-                        auction.setId(generatedKeys.getLong(1));
+                        auction.setId(generatedKeys.getInt(1));
                     }
                 }
                 return true;
@@ -96,7 +96,7 @@ public class AuctionRepository {
     /**
      * 🔥 BỔ SUNG: Tìm kiếm một phiên đấu giá dựa theo ID phục vụ cho việc đặt giá (Bid)
      */
-    public Auction getAuctionById(long auctionId) {
+    public Auction getAuctionById(int auctionId) {
         String sql = "SELECT a.*, i.name AS item_name, i.image_path AS item_image " +
                 "FROM auctions a " +
                 "INNER JOIN items i ON a.item_id = i.id " +
@@ -119,7 +119,7 @@ public class AuctionRepository {
     /**
      * 🔥 BỔ SUNG: Cập nhật giá hiện tại mới nhất của phiên đấu giá vào Database khi bid thành công
      */
-    public boolean updateCurrentPrice(long auctionId, double newPrice) {
+    public boolean updateCurrentPrice(int auctionId, double newPrice) {
         String sql = "UPDATE auctions SET current_price = ? WHERE id = ?";
         try (Connection conn = DatabaseService.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -134,7 +134,7 @@ public class AuctionRepository {
     }
 
     // -- Cập nhật trạng thái (Dùng cho approve, start, end, cancel auction)
-    public boolean updateStatus(long auctionId, AuctionStatus newStatus) {
+    public boolean updateStatus(int auctionId, AuctionStatus newStatus) {
         String sql = "UPDATE auctions SET status = ? WHERE id = ?";
         try (Connection conn = DatabaseService.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -158,7 +158,7 @@ public class AuctionRepository {
         item.setImagePath(rs.getString("item_image"));
 
         Auction a = new Auction();
-        a.setId(rs.getLong("id"));
+        a.setId(rs.getInt("id"));
         a.setSellerId(rs.getInt("seller_id"));
         a.setItem(item);
 
@@ -179,7 +179,7 @@ public class AuctionRepository {
 
     public boolean saveOrUpdate(Auction auction) {
         // Nếu ID chưa có hoặc bằng 0 -> Phiên này chưa từng lưu vào DB -> Tiến hành thêm mới
-        if (auction.getId() == null || auction.getId() == 0) {
+        if (auction.getId() == 0) {
             return addAuctionToRepo(auction);
         } else {
             // Nếu đã có ID -> Phiên này đã có trong DB -> Tiến hành cập nhật toàn bộ thông tin mới
@@ -204,5 +204,62 @@ public class AuctionRepository {
                 return false;
             }
         }
+    }
+
+    // -- Thêm một bid vào Database
+    public boolean addBidToRepo(int auctionId, Bid bid) {
+        String sql = "INSERT INTO bids (auction_id, bidder_id, bid_amount, bid_time) VALUES (?, ?, ?, ?)";
+
+        try (Connection conn = DatabaseService.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, auctionId);
+            pstmt.setInt(2, bid.getBidder().getId());
+            pstmt.setDouble(3, bid.getAmount());
+            pstmt.setTimestamp(4, Timestamp.valueOf(bid.getTime()));
+
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    // -- Lấy danh sách bids theo auction Id
+    public List<Bid> getBidsByAuctionId(int auctionId) {
+        List<Bid> bidList = new ArrayList<>();
+
+        String sql = "SELECT b.*, u.username, u.email, u.balance " +
+                "FROM bids b " +
+                "INNER JOIN users u ON b.bidder_id = u.id " +
+                "WHERE b.auction_id = ? " +
+                "ORDER BY b.bid_amount DESC";
+
+        try (Connection conn = DatabaseService.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, auctionId);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+
+                    int id = rs.getInt("bidder_id");
+                    String username = rs.getString("username");
+                    String email = rs.getString("email");
+                    double balance = rs.getDouble("balance");
+                    Bidder bidder = new Bidder(id, username, email, balance);
+
+                    Bid bid = new Bid();
+                    bid.setBidder(bidder);
+                    bid.setAmount(rs.getDouble("bid_amount"));
+                    bid.setTime(rs.getTimestamp("bid_time").toLocalDateTime());
+
+                    bidList.add(bid);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return bidList;
     }
 }

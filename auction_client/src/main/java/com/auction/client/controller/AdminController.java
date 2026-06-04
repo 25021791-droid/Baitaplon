@@ -104,8 +104,8 @@ public class AdminController implements Initializable {
 
         TableColumn<Auction, String> colId = new TableColumn<>("ID");
         colId.setCellValueFactory(cellData -> {
-            Long id = cellData.getValue().getId();
-            return new SimpleStringProperty(id != null ? id.toString() : "N/A");
+            int id = cellData.getValue().getId();
+            return new SimpleStringProperty(String.valueOf(id));
         });
         colId.setPrefWidth(75);
 

@@ -92,7 +92,7 @@ public class ClientHandler implements Runnable {
                 } else if ("BID".equals(command)) {
                     String[] parts = request.split(",");
                     try {
-                        long auctionId = Long.parseLong(parts[1]);
+                        int auctionId = Integer.parseInt(parts[1]);
                         int bidderId = Integer.parseInt(parts[2]);
                         double bidAmount = Double.parseDouble(parts[3]);
 
@@ -244,13 +244,13 @@ public class ClientHandler implements Runnable {
 
                 } else if ("APPROVE_AUCTION".equals(command)) {
                     String[] parts = request.split(",");
-                    long auctionId = Long.parseLong(parts[1]);
+                    int auctionId = Integer.parseInt(parts[1]);
                     boolean ok = auctionService.approveAuction(auctionId);
                     sendMessage(out, ok ? "APPROVE_AUCTION_SUCCESS" : "APPROVE_AUCTION_FAIL");
 
                 } else if ("CANCEL_AUCTION".equals(command)) {
                     String[] parts = request.split(",");
-                    long auctionId = Long.parseLong(parts[1]);
+                    int auctionId = Integer.parseInt(parts[1]);
                     boolean ok = auctionService.cancelAuction(auctionId);
                     sendMessage(out, ok ? "CANCEL_AUCTION_SUCCESS" : "CANCEL_AUCTION_FAIL");
 

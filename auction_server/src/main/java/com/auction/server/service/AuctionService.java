@@ -14,7 +14,7 @@ public class AuctionService {
     private final BidService bidService = new BidService();
     private final UserService userService = new UserService();
 
-    public synchronized boolean placeBid(long auctionId, int bidderId, double bidAmount) {
+    public synchronized boolean placeBid(int auctionId, int bidderId, double bidAmount) {
         System.out.println("[AuctionService] Đang xử lý đặt giá cho phiên: " + auctionId + " bởi User: " + bidderId);
 
         Auction auction = auctionRepository.getAuctionById(auctionId);

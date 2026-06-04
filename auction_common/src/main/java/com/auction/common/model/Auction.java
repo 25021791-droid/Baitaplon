@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 
 public class Auction {
 
-    private Long id;
+    private int id;
     private Item item;
     private List<Bid> bids;
     private double startingPrice;
@@ -42,11 +42,11 @@ public class Auction {
 
     // ================= GETTERS & SETTERS =================
 
-    public Long getId() {
+    public int getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(int id) {
         this.id = id;
     }
 

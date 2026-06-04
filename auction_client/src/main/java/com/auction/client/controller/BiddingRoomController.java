@@ -49,7 +49,7 @@ public class BiddingRoomController {
         networkService.setOnNewBidBroadcast(message -> {
             try {
                 String[] parts = message.split(",");
-                long bcastAuctionId = Long.parseLong(parts[1]);
+                int bcastAuctionId = Integer.parseInt(parts[1]);
 
                 // Chỉ cập nhật UI nếu gói tin này thuộc về phòng đấu giá sản phẩm người dùng đang xem
                 if (currentAuction != null && bcastAuctionId == currentAuction.getId()) {

@@ -1,21 +1,16 @@
 package com.auction.client.controller;
 
 import com.auction.common.model.Auction;
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.util.Duration;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.time.Duration;
-import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.Locale;
 
