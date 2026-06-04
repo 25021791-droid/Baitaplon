@@ -84,7 +84,6 @@ public class NetworkClientService {
         return socket != null && socket.isConnected() && !socket.isClosed() && out != null;
     }
 
-    
     private void sendMessage(String message) throws IOException {
         byte[] payload = message.getBytes(java.nio.charset.StandardCharsets.UTF_8);
         out.writeInt(payload.length);
@@ -92,7 +91,6 @@ public class NetworkClientService {
         out.flush();
     }
 
-    
 
     private void startListening() {
         Thread listenerThread = new Thread(() -> {

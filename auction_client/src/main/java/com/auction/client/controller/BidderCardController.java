@@ -1,6 +1,9 @@
 package com.auction.client.controller;
 
 import com.auction.common.model.Auction;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
@@ -22,31 +25,53 @@ public class BidderCardController {
     @FXML private Label lblPrice;
     @FXML private Label lblTime;
 
+    private Timeline countdownTimeline;
+
     public void setData(Auction auction) {
         if (auction == null || auction.getItem() == null) {
             return;
         }
 
         lblTitle.setText(auction.getItem().getName());
-
         lblPrice.setText("đ " + String.format(Locale.forLanguageTag("vi-VN"), "%,.0f", auction.getCurrentPrice()));
-
         lblCategory.setText(auction.getItem().getClass().getSimpleName().toUpperCase());
 
-        if (auction.getEndTime() != null) {
-            lblTime.setText(calculateTimeRemaining(auction.getEndTime()));
-        } else {
-            lblTime.setText("Không xác định");
+        if (countdownTimeline != null) {
+            countdownTimeline.stop();
         }
 
-        
-        String base64Image = auction.getItem().getImagePath();
+        LocalDateTime endTime = auction.getEndTime();
 
+        countdownTimeline = new Timeline(new KeyFrame(javafx.util.Duration.seconds(1), (ActionEvent event) -> {
+            LocalDateTime now = LocalDateTime.now();
+
+            Duration duration = Duration.between(now, endTime);
+
+            if (duration.isNegative() || duration.isZero()) {
+                lblTime.setText("Phiên đấu giá đã kết thúc!");
+                lblTime.setStyle("-fx-text-fill: red;");
+                countdownTimeline.stop();
+            } else {
+                long hours = duration.toHours();
+                long minutes = duration.toMinutes() % 60;
+                long seconds = duration.getSeconds() % 60;
+
+                String timeString = "";
+                if (hours > 0) {
+                    timeString += hours + "h ";
+                }
+                timeString += String.format("%02dm %02ds", minutes, seconds);
+
+                lblTime.setText(timeString);
+            }
+        }));
+        countdownTimeline.setCycleCount(Timeline.INDEFINITE);
+        countdownTimeline.play();
+
+        String base64Image = auction.getItem().getImagePath();
         if (base64Image != null && !base64Image.equals("NO_IMAGE") && !base64Image.isEmpty()) {
             try {
-                
                 byte[] imageBytes = Base64.getDecoder().decode(base64Image);
-                
                 Image image = new Image(new ByteArrayInputStream(imageBytes));
                 imgItem.setImage(image);
             } catch (Exception e) {
@@ -54,12 +79,10 @@ public class BidderCardController {
                 loadDefaultImage();
             }
         } else {
-            
             loadDefaultImage();
         }
     }
 
-    
     private void loadDefaultImage() {
         try {
             InputStream stream = getClass().getResourceAsStream("/images/default.png");
@@ -74,26 +97,9 @@ public class BidderCardController {
         }
     }
 
-    private String calculateTimeRemaining(LocalDateTime endTime) {
-        LocalDateTime now = LocalDateTime.now();
-
-        if (now.isAfter(endTime)) {
-            return "Đã kết thúc";
-        }
-
-        Duration duration = Duration.between(now, endTime);
-        long days = duration.toDays();
-        long hours = duration.toHoursPart();
-        long minutes = duration.toMinutesPart();
-
-        if (days > 0) {
-            return days + " ngày " + hours + " giờ";
-        } else if (hours > 0) {
-            return hours + "h " + minutes + "m";
-        } else if (minutes > 0) {
-            return minutes + " phút";
-        } else {
-            return "Sắp kết thúc";
+    public void shutdown() {
+        if (countdownTimeline != null) {
+            countdownTimeline.stop();
         }
     }
 }

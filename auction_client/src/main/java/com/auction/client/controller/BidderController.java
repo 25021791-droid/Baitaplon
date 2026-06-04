@@ -13,10 +13,12 @@ import javafx.scene.layout.FlowPane;
 import javafx.util.Duration;
 import java.net.URL;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
 import javafx.application.Platform;
 import javafx.scene.Parent;
+
 import java.io.IOException;
 import java.io.ByteArrayInputStream;
 import java.util.Base64;
@@ -42,10 +44,10 @@ public class BidderController implements Initializable {
     private Bidder bidder;
     private Auction currentAuction;
     private NetworkClientService networkService;
-    private int secondsRemaining;
     private Timeline timeline;
     
     private ObservableList<Bid> bidHistoryList = FXCollections.observableArrayList();
+    private final List<BidderCardController> activeControllers = new ArrayList<>();
 
     @Override
     public void initialize(URL location, ResourceBundle resource) {
@@ -53,15 +55,6 @@ public class BidderController implements Initializable {
         setupUser();
         setupBidLogTable();
 
-        
-        Timeline refreshTimeline = new Timeline(new KeyFrame(Duration.seconds(5), event -> {
-            System.out.println("[Bidder] Tự động refresh danh sách auction...");
-            networkService.requestActiveAuctions();
-        }));
-        refreshTimeline.setCycleCount(Timeline.INDEFINITE);
-        refreshTimeline.play();
-
-        
         networkService.setOnActiveAuctionsReceived(auctionList -> {
             updateCardGrid(auctionList);
         });
@@ -70,13 +63,11 @@ public class BidderController implements Initializable {
             updateEndedCards(auctions);
         });
 
-        
         networkService.setOnBidResult(isSuccess -> {
             Platform.runLater(() -> {
                 if (isSuccess) {
                     resultLabel.setText("Đặt giá đấu thành công!");
                     resultLabel.setStyle("-fx-text-fill: green;");
-
                     
                     double bidAmount = Double.parseDouble(bidField.getText());
                     Bid selfBid = new Bid(bidder, bidAmount);
@@ -92,7 +83,6 @@ public class BidderController implements Initializable {
             });
         });
 
-        
         networkService.requestEndedAuctions();
         networkService.requestActiveAuctions();
     }
@@ -102,13 +92,19 @@ public class BidderController implements Initializable {
             flowActiveAuctions.getChildren().clear();
             flowEndedAuctions.getChildren().clear();
 
+            for (BidderCardController controller : activeControllers) {
+                controller.shutdown();
+            }
+            activeControllers.clear();
+
             for (Auction auction : auctionList) {
                 try {
                     FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/auction/BidderCard.fxml"));
                     javafx.scene.Parent cardNode = loader.load();
 
-                    BidderCardController cardController = loader.getController();
-                    cardController.setData(auction);
+                    BidderCardController controller = loader.getController();
+                    controller.setData(auction);
+                    activeControllers.add(controller);
 
                     cardNode.setOnMouseClicked(event -> {
                         this.currentAuction = auction;
@@ -192,7 +188,6 @@ public class BidderController implements Initializable {
             loadDefaultImage();
         }
 
-        this.secondsRemaining = 300; 
         setupTimer();
         if(bidField.isDisable()) {
             bidField.setDisable(false);
@@ -200,7 +195,6 @@ public class BidderController implements Initializable {
         resultLabel.setText(""); 
     }
 
-    
     private void loadDefaultImage() {
         try {
             Image image = new Image(getClass().getResourceAsStream("/images/default_item.png"));
@@ -215,7 +209,6 @@ public class BidderController implements Initializable {
         colAmount.setCellValueFactory(new PropertyValueFactory<>("amount"));
         colTime.setCellValueFactory(new PropertyValueFactory<>("time"));
 
-        
         bidTable.setItems(bidHistoryList);
     }
 

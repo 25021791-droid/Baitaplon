@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Locale;
 import java.io.File;
 
-import com.auction.server.service.AuctionRepository;
 import com.auction.server.service.AuctionService;
 import com.auction.server.service.ItemRepository;
 import com.auction.server.service.UserService;
