@@ -92,7 +92,6 @@ public class NetworkClientService {
         out.flush();
     }
 
-
     private void startListening() {
         Thread listenerThread = new Thread(() -> {
             try {
@@ -133,18 +132,7 @@ public class NetworkClientService {
                     else if ("LOGIN_FAIL".equals(command)) {
                         if (onLoginFail != null) Platform.runLater(() -> onLoginFail.accept("Đăng nhập thất bại!"));
                     }
-                    else if ("BID_SUCCESS".equals(command) || "BID_OK".equals(command)) {
-                        if (parts.length > 1) {
-                            try {
-                                double newBalance = Double.parseDouble(parts[1]);
-                                User currentUser = UserSession.getUser();
-                                if (currentUser instanceof Bidder) {
-                                    ((Bidder) currentUser).setBalance(newBalance);
-                                }
-                            } catch (Exception e) {
-                                System.err.println("[NetworkClientService] Lỗi phân tích số dư mới: " + e.getMessage());
-                            }
-                        }
+                    else if ("BID_OK".equals(command)) {
                         if (onBidResult != null) Platform.runLater(() -> onBidResult.accept(true));
                     }
                     else if ("BID_FAIL".equals(command)) {
@@ -330,7 +318,7 @@ public class NetworkClientService {
         listenerThread.start();
     }
 
-    
+
 
     public void requestMyAuctions(int sellerId) {
         if (!isConnected()) return;
@@ -359,7 +347,9 @@ public class NetworkClientService {
         }
         try {
             sendMessage("BID," + auctionId + "," + userId + "," + amount);
-        } catch (IOException e) { e.printStackTrace(); }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void register(String username, String password, String email, String role) {

@@ -15,7 +15,6 @@ public class Auction {
     private int sellerId;
     private int winnerId;
 
-    
     private LocalDateTime startTime = LocalDateTime.now();
     private LocalDateTime endTime = LocalDateTime.now().plusHours(24);
 
@@ -25,11 +24,7 @@ public class Auction {
     public Auction(Item item, double startPrice) {
         this.item = item;
         this.startingPrice = startPrice;
-
-        
-        
         this.currentPrice = startPrice;
-
         this.bids = new ArrayList<>();
         this.status = AuctionStatus.OPEN;
     }
@@ -39,8 +34,6 @@ public class Auction {
                 this.status == AuctionStatus.CANCELED ||
                 this.status == AuctionStatus.PAID;
     }
-
-    
 
     public int getId() {
         return id;

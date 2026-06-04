@@ -1,6 +1,7 @@
 package com.auction.client.controller;
 
 import com.auction.common.model.Auction;
+import com.auction.common.model.AuctionStatus;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.event.ActionEvent;
@@ -40,33 +41,44 @@ public class BidderCardController {
             countdownTimeline.stop();
         }
 
-        LocalDateTime endTime = auction.getEndTime();
+        if (auction.getStatus() == AuctionStatus.FINISHED ||
+                auction.getStatus() == AuctionStatus.PAID ||
+                auction.getStatus() == AuctionStatus.CANCELED) {
+            lblTime.setText("--:--");
+            lblTime.setStyle("-fx-text-fill: red;");
 
-        countdownTimeline = new Timeline(new KeyFrame(javafx.util.Duration.seconds(1), (ActionEvent event) -> {
-            LocalDateTime now = LocalDateTime.now();
+        } else {
+            Runnable updateCardTime = () -> {
+                LocalDateTime now = LocalDateTime.now();
 
-            Duration duration = Duration.between(now, endTime);
+                Duration duration = Duration.between(now, auction.getEndTime());
 
-            if (duration.isNegative() || duration.isZero()) {
-                lblTime.setText("Phiên đấu giá đã kết thúc!");
-                lblTime.setStyle("-fx-text-fill: red;");
-                countdownTimeline.stop();
-            } else {
-                long hours = duration.toHours();
-                long minutes = duration.toMinutes() % 60;
-                long seconds = duration.getSeconds() % 60;
+                if (duration.isNegative() || duration.isZero()) {
+                    lblTime.setText("Phiên đấu giá đã kết thúc!");
+                    lblTime.setStyle("-fx-text-fill: red;");
+                    countdownTimeline.stop();
+                } else {
+                    long hours = duration.toHours();
+                    long minutes = duration.toMinutes() % 60;
+                    long seconds = duration.getSeconds() % 60;
 
-                String timeString = "";
-                if (hours > 0) {
-                    timeString += hours + "h ";
+                    String timeString = "";
+                    if (hours > 0) {
+                        timeString += hours + "h ";
+                    }
+                    timeString += String.format("%02dm %02ds", minutes, seconds);
+                    lblTime.setText(timeString);
                 }
-                timeString += String.format("%02dm %02ds", minutes, seconds);
+            };
 
-                lblTime.setText(timeString);
-            }
-        }));
-        countdownTimeline.setCycleCount(Timeline.INDEFINITE);
-        countdownTimeline.play();
+            updateCardTime.run();
+            countdownTimeline = new Timeline(new KeyFrame(javafx.util.Duration.seconds(1), (ActionEvent event) -> {
+                updateCardTime.run();
+            }));
+
+            countdownTimeline.setCycleCount(Timeline.INDEFINITE);
+            countdownTimeline.play();
+        }
 
         String base64Image = auction.getItem().getImagePath();
         if (base64Image != null && !base64Image.equals("NO_IMAGE") && !base64Image.isEmpty()) {

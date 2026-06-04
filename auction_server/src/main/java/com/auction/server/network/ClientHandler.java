@@ -44,11 +44,7 @@ public class ClientHandler implements Runnable {
 
             boolean isRunning = true;
             while (isRunning) {
-
-
-
                 int length = in.readInt();
-
 
                 if (length > 20 * 1024 * 1024) {
                     System.err.println("[Server Cảnh báo] Client " + clientIp + " gửi gói tin quá lớn (" + length + " bytes). Đóng kết nối!");
@@ -103,8 +99,8 @@ public class ClientHandler implements Runnable {
                     Bidder currentBidder = userService.getBidderById(userId);
 
                     if (bidAmount < currentAuction.getCurrentPrice() || bidAmount > currentBidder.getBalance()) {
-                        out.writeUTF("BID_FAIL");
-                        out.flush();
+                        sendMessage(out, "BID_FAIL");
+
                     } else {
                         Bid newBid = new Bid(currentBidder, bidAmount);
                         boolean isBidSaved = auctionService.addBid(auctionId, newBid);
@@ -114,8 +110,7 @@ public class ClientHandler implements Runnable {
                             currentAuction.setCurrentPrice(bidAmount);
                             currentAuction.getBids().add(newBid);
                         }
-                        out.writeUTF("BID_OK");
-                        out.flush();
+                        sendMessage(out, "BID_OK");
                     }
 
                 } else if ("REGISTER".equals(command)) {

@@ -46,20 +46,19 @@ public class AuctionService {
 
             Bid newBid = new Bid(bidder, bidAmount, java.time.LocalDateTime.now());
             try {
-                auctionRepository.addBidToRepo((int) auctionId, newBid);
+                auctionRepository.addBidToRepo(auctionId, newBid);
             } catch (Exception e) {
                 System.err.println("[AuctionService] Lỗi khi lưu log Bid vào DB: " + e.getMessage());
             }
 
             boolean isUpdated = auctionRepository.updateCurrentPrice(auctionId, bidAmount);
             if (!isUpdated) {
-                isUpdated = auctionRepository.saveOrUpdate(auction);
+                auctionRepository.saveOrUpdate(auction);
             }
 
             System.out.println("[AuctionService] Cập nhật giá mới thành công lên hệ thống (Chưa trừ tiền): đ " + bidAmount);
             return true;
         }
-
         return false;
     }
 

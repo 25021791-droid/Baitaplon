@@ -28,7 +28,7 @@
                 <VBox alignment="BOTTOM_RIGHT">
                     <children>
                         <Label text="Còn lại" style="-fx-font-size: 10px; -fx-text-fill: gray;" />
-                        <Label fx:id="lblTime" text="41d 4h" style="-fx-font-size: 11px; -fx-font-weight: bold;" />
+                        <Label fx:id="lblTime" text="--:--" style="-fx-font-size: 11px; -fx-font-weight: bold;" />
                     </children>
                 </VBox>
             </children>
