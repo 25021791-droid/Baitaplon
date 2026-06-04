@@ -122,7 +122,7 @@ public class SellerController implements Initializable {
             }
             int sellerId = currentUser.getId();
 
-            // Gửi request
+            
             networkService.createAuction(itemName, startPrice, sellerId, selectedImageFile);
 
         } catch (NumberFormatException e) {

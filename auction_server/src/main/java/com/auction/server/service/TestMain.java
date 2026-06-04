@@ -9,7 +9,7 @@ public class TestMain {
         boolean testRegister = false;
         boolean testLogin = false;
 
-        // -- Test Register
+        
         if (testRegister) {
             boolean isRegisterOk = userService.register("user", "aaa", "test@gmail.com", "USER");
             if (isRegisterOk) {
@@ -19,7 +19,7 @@ public class TestMain {
             }
         }
 
-        // -- Test Login
+        
         if (testLogin) {
             UserService userService1 = new UserService();
 

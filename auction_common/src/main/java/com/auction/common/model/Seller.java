@@ -19,7 +19,7 @@ public class Seller extends User {
 
     public void editItem(Item item) {
         for (int i = 0; i < myItems.size(); i++) {
-            // 🔥 ĐÃ FIX: Sử dụng .equals() thay vì == để so sánh kiểu đối tượng Integer
+            
             if (myItems.get(i).getId().equals(item.getId())) {
                 myItems.set(i, item);
                 System.out.println("Item updated: " + item.getName());

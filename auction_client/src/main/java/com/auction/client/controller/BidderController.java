@@ -44,7 +44,7 @@ public class BidderController implements Initializable {
     private NetworkClientService networkService;
     private int secondsRemaining;
     private Timeline timeline;
-    // Sử dụng ObservableList để quản lý dữ liệu bảng lịch sử cược linh hoạt
+    
     private ObservableList<Bid> bidHistoryList = FXCollections.observableArrayList();
 
     @Override
@@ -53,7 +53,7 @@ public class BidderController implements Initializable {
         setupUser();
         setupBidLogTable();
 
-        // Tự động refresh mỗi 5 giây
+        
         Timeline refreshTimeline = new Timeline(new KeyFrame(Duration.seconds(5), event -> {
             System.out.println("[Bidder] Tự động refresh danh sách auction...");
             networkService.requestActiveAuctions();
@@ -61,7 +61,7 @@ public class BidderController implements Initializable {
         refreshTimeline.setCycleCount(Timeline.INDEFINITE);
         refreshTimeline.play();
 
-        // ĐĂNG KÝ CÁC CALLBACK NHẬN DỮ LIỆU TỪ SERVER
+        
         networkService.setOnActiveAuctionsReceived(auctionList -> {
             updateCardGrid(auctionList);
         });
@@ -70,20 +70,20 @@ public class BidderController implements Initializable {
             updateEndedCards(auctions);
         });
 
-        // Xử lý kết quả trả về khi người dùng đặt cược (Đặt giá) thành công
+        
         networkService.setOnBidResult(isSuccess -> {
             Platform.runLater(() -> {
                 if (isSuccess) {
                     resultLabel.setText("Đặt giá đấu thành công!");
                     resultLabel.setStyle("-fx-text-fill: green;");
 
-                    // 🔥 CẬP NHẬT: Thêm lượt cược mới của chính mình vào bảng lịch sử hiển thị bên phải
+                    
                     double bidAmount = Double.parseDouble(bidField.getText());
                     Bid selfBid = new Bid(bidder, bidAmount);
-                    bidHistoryList.add(0, selfBid); // Đẩy lượt cược mới lên đầu bảng
+                    bidHistoryList.add(0, selfBid); 
 
                     bidField.clear();
-                    // Yêu cầu server cập nhật ngay lập tức giá mới lên màn hình card
+                    
                     networkService.requestActiveAuctions();
                 } else {
                     resultLabel.setText("Đặt giá thất bại! Vui lòng thử lại.");
@@ -92,7 +92,7 @@ public class BidderController implements Initializable {
             });
         });
 
-        // Yêu cầu dữ liệu lần đầu khi vừa vào màn hình
+        
         networkService.requestEndedAuctions();
         networkService.requestActiveAuctions();
     }
@@ -130,7 +130,7 @@ public class BidderController implements Initializable {
                 }
             }
 
-            // Cập nhật lại thông tin chi tiết khu vực bên phải nếu sản phẩm đang xem được cập nhật giá từ Server
+            
             if (currentAuction != null) {
                 for (Auction a : auctionList) {
                     if (a.getId() == currentAuction.getId()) {
@@ -177,7 +177,7 @@ public class BidderController implements Initializable {
         lblCurrentPrice.setText("Giá hiện tại: $" + auction.getCurrentPrice());
         lblItemDescription.setText("Mô tả: " + auction.getItem().getName() + "\nTình trạng: Hoạt động tốt.");
 
-        // 🔥 ĐÃ CẬP NHẬT: Giải mã chuỗi Base64 nhận từ xa qua luồng mạng thành hình ảnh trực quan
+        
         String base64Image = auction.getItem().getImagePath();
         if (base64Image != null && !base64Image.isEmpty() && !"NO_IMAGE".equals(base64Image)) {
             try {
@@ -192,15 +192,15 @@ public class BidderController implements Initializable {
             loadDefaultImage();
         }
 
-        this.secondsRemaining = 300; // Thiết lập mặc định 5 phút cho demo hiển thị
+        this.secondsRemaining = 300; 
         setupTimer();
         if(bidField.isDisable()) {
             bidField.setDisable(false);
         }
-        resultLabel.setText(""); // Xóa thông báo cũ
+        resultLabel.setText(""); 
     }
 
-    // Hàm helper nạp ảnh mặc định tránh crash UI khi sản phẩm không đính kèm ảnh
+    
     private void loadDefaultImage() {
         try {
             Image image = new Image(getClass().getResourceAsStream("/images/default_item.png"));
@@ -215,7 +215,7 @@ public class BidderController implements Initializable {
         colAmount.setCellValueFactory(new PropertyValueFactory<>("amount"));
         colTime.setCellValueFactory(new PropertyValueFactory<>("time"));
 
-        // Liên kết ObservableList trực tiếp vào TableView
+        
         bidTable.setItems(bidHistoryList);
     }
 
@@ -292,7 +292,7 @@ public class BidderController implements Initializable {
             dialog.setTitle("Profile");
             dialog.setScene(new javafx.scene.Scene(root));
             dialog.showAndWait();
-            setupUser(); // Cập nhật lại số dư ví hoặc tên hiển thị nếu có thay đổi trong Profile
+            setupUser(); 
         } catch (java.io.IOException e) {
             e.printStackTrace();
         }

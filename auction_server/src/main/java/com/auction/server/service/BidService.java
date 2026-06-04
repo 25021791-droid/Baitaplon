@@ -13,8 +13,8 @@ public class BidService {
 
     private final List<BidObserver> observers = new ArrayList<>();
 
-    // 🔥 ĐÃ THÊM: Sử dụng ReentrantLock để giải quyết bài toán đồng thời (Concurrency)
-    // Đảm bảo tại một thời điểm, chỉ có 1 luồng (1 Client) được phép can thiệp vào giá của phiên đấu giá
+    
+    
     private final Lock bidLock = new ReentrantLock();
 
     public void addObserver(BidObserver observer) {
@@ -27,11 +27,11 @@ public class BidService {
         }
     }
 
-    // Bổ sung nạp chồng phương thức cho BidLogger (Nếu bạn áp dụng Cách 2 ở bước trước)
+    
     private void notifyObservers(Bid newBid) {
         for (BidObserver observer : observers) {
-            // Ép kiểu hoặc gọi hàm hỗ trợ tùy thiết kế interface của bạn
-            // observer.update(newBid);
+            
+            
         }
     }
 
@@ -39,22 +39,22 @@ public class BidService {
         bidLock.lock();
 
         try {
-            // 1. Kiểm tra trạng thái phiên đấu giá
+            
             if (auction.isEnded()) {
                 notifyObservers("Lỗi: Phiên đấu giá " + auction.getId() + " đã đóng!");
                 return false;
             }
 
-            // 2. So sánh giá (Logic nghiệp vụ cốt lõi)
+            
             if (bid.getAmount() <= auction.getCurrentPrice()) {
-                return false; // Giá không hợp lệ (thấp hơn hoặc bằng giá hiện tại)
+                return false; 
             }
 
-            // 3. Cập nhật dữ liệu vào phiên đấu giá
+            
             auction.setCurrentPrice(bid.getAmount());
             auction.getBids().add(bid);
 
-            // 4. Ghi Log Server
+            
             notifyObservers(String.format("Phiên [%d] - Cập nhật giá mới: %,.0f VNĐ", auction.getId(), bid.getAmount()));
 
             return true;
@@ -69,7 +69,7 @@ public class BidService {
 
     public Bid getWinner(Auction auction) {
         if (auction == null || auction.getBids() == null || auction.getBids().isEmpty()) {
-            return null; // Không có ai đặt giá
+            return null; 
         }
 
         List<Bid> bids = auction.getBids();

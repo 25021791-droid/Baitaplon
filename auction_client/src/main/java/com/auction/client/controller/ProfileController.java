@@ -35,15 +35,15 @@ public class ProfileController implements Initializable {
             emailField.setText(currentUser.getEmail());
         }
 
-        // 🔥 ĐÃ FIX: Bọc Platform.runLater để tránh lỗi xung đột luồng JavaFX khi nhận dữ liệu mạng
+        
         networkService.setOnProfileUpdateResult(isSuccess -> {
             Platform.runLater(() -> {
                 if (isSuccess) {
-                    // Cập nhật thông tin đối tượng User hiện tại
+                    
                     currentUser.setName(usernameField.getText().trim());
                     currentUser.setEmail(emailField.getText().trim());
 
-                    // Ghi đè lại vào UserSession để đồng bộ tên mới ra các màn hình ngoài
+                    
                     UserSession.setUser(currentUser);
 
                     showProfileMessage("Hồ sơ đã được cập nhật thành công.", "green");
@@ -53,7 +53,7 @@ public class ProfileController implements Initializable {
             });
         });
 
-        // 🔥 ĐÃ FIX: Đảm bảo việc xóa trường text và hiển thị thông báo mật khẩu chạy trên UI Thread
+        
         networkService.setOnPasswordChangeResult(isSuccess -> {
             Platform.runLater(() -> {
                 if (isSuccess) {

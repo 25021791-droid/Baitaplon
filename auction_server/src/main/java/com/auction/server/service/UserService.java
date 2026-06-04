@@ -9,7 +9,7 @@ import java.sql.*;
 
 public class UserService {
 
-    // ĐÃ SỬA: Loại bỏ từ khóa static để đồng bộ với cơ chế khởi tạo đối tượng (new UserService) từ ClientHandler
+    
     public User login(String username, String password) {
         String query = "SELECT * FROM users WHERE username = ?";
         System.out.println("[Server] Login start: " + username);
@@ -58,9 +58,7 @@ public class UserService {
         }
     }
 
-    /**
-     * 🔥 BỔ SUNG: Lấy thông tin User theo ID để kiểm tra ví và quyền hạn khi thực hiện Đặt giá (Bid)
-     */
+    
     public User getUserById(int userId) {
         String query = "SELECT * FROM users WHERE id = ?";
         try (Connection conn = DatabaseService.getConnection();
@@ -111,7 +109,7 @@ public class UserService {
             pstmt.setString(2, hashedPass);
             pstmt.setString(3, email);
             pstmt.setString(4, role);
-            pstmt.setDouble(5, 100000.0); // Số dư ví thử nghiệm mặc định
+            pstmt.setDouble(5, 100000.0); 
 
             boolean success = pstmt.executeUpdate() > 0;
             System.out.println("[Server] Insert finished.");

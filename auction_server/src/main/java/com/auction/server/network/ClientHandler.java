@@ -27,7 +27,7 @@ public class ClientHandler implements Runnable {
         this.clientSocket = socket;
     }
 
-    // 🔥 HÀM TIỆN ÍCH MỚI: Gửi dữ liệu bằng mảng byte (Thay thế cho out.writeUTF)
+
     private void sendMessage(DataOutputStream out, String message) throws IOException {
         byte[] payload = message.getBytes(StandardCharsets.UTF_8);
         out.writeInt(payload.length);
@@ -43,12 +43,12 @@ public class ClientHandler implements Runnable {
 
             boolean isRunning = true;
             while (isRunning) {
-                // ====================================================================
-                // 🔥 CƠ CHẾ ĐỌC MỚI: Đọc mảng byte để bypass giới hạn 64KB của readUTF
-                // ====================================================================
+
+
+
                 int length = in.readInt();
 
-                // Bảo vệ Server: Chặn các gói tin lớn hơn 20MB để chống tràn RAM (DDoS/OOM)
+
                 if (length > 20 * 1024 * 1024) {
                     System.err.println("[Server Cảnh báo] Client gửi gói tin quá lớn (" + length + " bytes). Đóng kết nối!");
                     break;
@@ -60,7 +60,7 @@ public class ClientHandler implements Runnable {
 
                 System.out.println("[Server] Nhận được yêu cầu: " + request.substring(0, Math.min(request.length(), 100)) + "...");
 
-                // Tách sơ bộ để nhận diện tên Lệnh (Command)
+
                 String[] temporaryParts = request.split(",");
                 String command = temporaryParts[0];
 

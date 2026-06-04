@@ -29,35 +29,35 @@ public class BiddingRoomController {
 
     @FXML
     public void initialize() {
-        // 1. Lấy instance dịch vụ mạng và thông tin session người dùng hiện tại
+        
         this.networkService = NetworkClientService.getInstance();
         this.currentUser = UserSession.getUser();
 
-        // 2. Khởi tạo biểu đồ thời gian thực
+        
         if (chartContainer != null) {
             chartController = new RealtimeChartController();
             chartContainer.getChildren().add(chartController.createChart());
         }
 
-        // 3. Đăng ký sự kiện nút bấm đặt giá công khai
+        
         if (placeBidButton != null) {
             placeBidButton.setOnAction(e -> handlePlaceBid());
         }
 
-        // 4. 🔥 QUAN TRỌNG: Lắng nghe Broadcast "NEW_BID" từ Server khi có ai đó đặt giá thành công
-        // Dữ liệu gói tin truyền từ Server dạng: "NEW_BID,auctionId,newPrice,bidderName,timeLeft"
+        
+        
         networkService.setOnNewBidBroadcast(message -> {
             try {
                 String[] parts = message.split(",");
                 int bcastAuctionId = Integer.parseInt(parts[1]);
 
-                // Chỉ cập nhật UI nếu gói tin này thuộc về phòng đấu giá sản phẩm người dùng đang xem
+                
                 if (currentAuction != null && bcastAuctionId == currentAuction.getId()) {
                     double newPrice = Double.parseDouble(parts[2]);
                     String topBidder = parts[3];
                     String timeLeft = parts.length > 4 ? parts[4] : "Đang diễn ra";
 
-                    // Gọi hàm cập nhật trạng thái UI và nạp dữ liệu lên biểu đồ biểu diễn
+                    
                     updateBiddingState(newPrice, topBidder, timeLeft);
                 }
             } catch (Exception ex) {
@@ -65,7 +65,7 @@ public class BiddingRoomController {
             }
         });
 
-        // 5. Lắng nghe kết quả cược của CHÍNH MÌNH khi nhấn nút đặt giá
+        
         networkService.setOnBidResult(isSuccess -> {
             Platform.runLater(() -> {
                 if (isSuccess) {
@@ -78,9 +78,7 @@ public class BiddingRoomController {
         });
     }
 
-    /**
-     * 🔥 BỔ SUNG: Hàm nhận dữ liệu ban đầu từ màn hình danh sách truyền sang khi bấm vào Card
-     */
+    
     public void setAuctionData(Auction auction) {
         this.currentAuction = auction;
         this.currentHighestPrice = auction.getCurrentPrice();
@@ -92,7 +90,7 @@ public class BiddingRoomController {
             currentPriceLabel.setText(String.format("%,.0f VNĐ", currentHighestPrice));
         }
 
-        // Đưa giá khởi điểm ban đầu lên biểu đồ
+        
         if (chartController != null) {
             chartController.onNewBidReceived(currentHighestPrice);
         }
@@ -107,7 +105,7 @@ public class BiddingRoomController {
         try {
             double bidAmount = Double.parseDouble(bidAmountInput.getText());
 
-            // Validate logic nghiệp vụ trên UI trước khi tốn băng thông đẩy lệnh đi
+            
             if (bidAmount <= currentHighestPrice) {
                 DialogUtils.showWarning("Lỗi đặt giá", "Giá không hợp lệ", "Giá đấu phải cao hơn giá hiện tại!");
                 return;
@@ -121,7 +119,7 @@ public class BiddingRoomController {
                 }
             }
 
-            // Bắn tín hiệu mạng thời gian thực lên TCP Server xử lý
+            
             networkService.placeBid(currentAuction.getId(), currentUser.getId(), bidAmount);
 
         } catch (NumberFormatException ex) {
@@ -131,9 +129,7 @@ public class BiddingRoomController {
         }
     }
 
-    /**
-     * Phương thức cập nhật trạng thái phòng đấu giá
-     */
+    
     public void updateBiddingState(double newPrice, String topBidder, String timeLeft) {
         Platform.runLater(() -> {
             this.currentHighestPrice = newPrice;
@@ -145,7 +141,7 @@ public class BiddingRoomController {
             }
         });
 
-        // Đẩy số liệu mới vào đồ thị Realtime
+        
         if (chartController != null) {
             chartController.onNewBidReceived(newPrice);
         }
