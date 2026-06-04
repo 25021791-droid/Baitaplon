@@ -108,4 +108,4 @@ mvn javafx:run -pl auction_client
 ## 6. Tài liệu báo cáo & Video trình diễn
 
 * **Link báo cáo PDF chi tiết:** file:///C:/Users/Admin/Downloads/B%C3%81O%20C%C3%81O%20B%C3%80I%20T%E1%BA%ACP%20L%E1%BB%9AN.pdf
-* **Link video demo chương trình:** [Xem video demo chạy thực tế tại đây (Thay link của bạn vào đây)](#)
+* **Link video demo chương trình:** https://youtu.be/n-jm1z4UI6g
