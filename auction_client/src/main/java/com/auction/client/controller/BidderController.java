@@ -13,7 +13,12 @@ import javafx.scene.layout.FlowPane;
 import javafx.util.Duration;
 import java.net.URL;
 import java.util.List;
-import java.util.ResourceBundle;import javafx.application.Platform;import javafx.scene.Parent;import java.io.IOException;
+import java.util.ResourceBundle;
+import javafx.application.Platform;
+import javafx.scene.Parent;
+import java.io.IOException;
+import java.io.ByteArrayInputStream;
+import java.util.Base64;
 
 public class BidderController implements Initializable {
 
@@ -38,31 +43,59 @@ public class BidderController implements Initializable {
     private NetworkClientService networkService;
     private int secondsRemaining;
     private Timeline timeline;
+    // Sử dụng ObservableList để quản lý dữ liệu bảng lịch sử cược linh hoạt
+    private ObservableList<Bid> bidHistoryList = FXCollections.observableArrayList();
 
     @Override
     public void initialize(URL location, ResourceBundle resource) {
         this.networkService = NetworkClientService.getInstance();
         setupUser();
         setupBidLogTable();
-        // Tự động refresh mỗi 5 giây (test)
+
+        // Tự động refresh mỗi 5 giây
         Timeline refreshTimeline = new Timeline(new KeyFrame(Duration.seconds(5), event -> {
             System.out.println("[Bidder] Tự động refresh danh sách auction...");
             networkService.requestActiveAuctions();
         }));
         refreshTimeline.setCycleCount(Timeline.INDEFINITE);
         refreshTimeline.play();
+
+        // ĐĂNG KÝ CÁC CALLBACK NHẬN DỮ LIỆU TỪ SERVER
         networkService.setOnActiveAuctionsReceived(auctionList -> {
             updateCardGrid(auctionList);
         });
+
         networkService.setOnEndedAuctionsReceived(auctions -> {
             updateEndedCards(auctions);
         });
 
+        // Xử lý kết quả trả về khi người dùng đặt cược (Đặt giá) thành công
+        networkService.setOnBidResult(isSuccess -> {
+            Platform.runLater(() -> {
+                if (isSuccess) {
+                    resultLabel.setText("Đặt giá đấu thành công!");
+                    resultLabel.setStyle("-fx-text-fill: green;");
+
+                    // 🔥 CẬP NHẬT: Thêm lượt cược mới của chính mình vào bảng lịch sử hiển thị bên phải
+                    double bidAmount = Double.parseDouble(bidField.getText());
+                    Bid selfBid = new Bid(bidder, bidAmount);
+                    bidHistoryList.add(0, selfBid); // Đẩy lượt cược mới lên đầu bảng
+
+                    bidField.clear();
+                    // Yêu cầu server cập nhật ngay lập tức giá mới lên màn hình card
+                    networkService.requestActiveAuctions();
+                } else {
+                    resultLabel.setText("Đặt giá thất bại! Vui lòng thử lại.");
+                    resultLabel.setStyle("-fx-text-fill: red;");
+                }
+            });
+        });
+
+        // Yêu cầu dữ liệu lần đầu khi vừa vào màn hình
         networkService.requestEndedAuctions();
         networkService.requestActiveAuctions();
     }
 
-    // ĐÃ CẬP NHẬT: Đưa toàn bộ logic nạp thẻ từ Server vào đây
     private void updateCardGrid(List<Auction> auctionList) {
         javafx.application.Platform.runLater(() -> {
             flowActiveAuctions.getChildren().clear();
@@ -93,6 +126,17 @@ public class BidderController implements Initializable {
                 } catch (java.io.IOException e) {
                     System.err.println("Lỗi load file AuctionCard.fxml. Kiểm tra lại tên file!");
                     e.printStackTrace();
+                }
+            }
+
+            // Cập nhật lại thông tin chi tiết khu vực bên phải nếu sản phẩm đang xem được cập nhật giá từ Server
+            if (currentAuction != null) {
+                for (Auction a : auctionList) {
+                    if (a.getId() == currentAuction.getId()) {
+                        this.currentAuction = a;
+                        lblCurrentPrice.setText("Giá hiện tại: $" + a.getCurrentPrice());
+                        break;
+                    }
                 }
             }
         });
@@ -127,19 +171,42 @@ public class BidderController implements Initializable {
             }
         });
     }
+
     private void updateAuctionDetails(Auction auction) {
         lblCurrentPrice.setText("Giá hiện tại: $" + auction.getCurrentPrice());
         lblItemDescription.setText("Mô tả: " + auction.getItem().getName() + "\nTình trạng: Hoạt động tốt.");
 
+        // 🔥 ĐÃ CẬP NHẬT: Giải mã chuỗi Base64 nhận từ xa qua luồng mạng thành hình ảnh trực quan
+        String base64Image = auction.getItem().getImagePath();
+        if (base64Image != null && !base64Image.isEmpty() && !"NO_IMAGE".equals(base64Image)) {
+            try {
+                byte[] imageBytes = Base64.getDecoder().decode(base64Image);
+                Image img = new Image(new ByteArrayInputStream(imageBytes));
+                itemImageView.setImage(img);
+            } catch (Exception e) {
+                System.err.println("[Lỗi] Không thể render ảnh Base64, nạp ảnh mặc định.");
+                loadDefaultImage();
+            }
+        } else {
+            loadDefaultImage();
+        }
+
+        this.secondsRemaining = 300; // Thiết lập mặc định 5 phút cho demo hiển thị
+        setupTimer();
+        if(bidField.isDisable()) {
+            bidField.setDisable(false);
+        }
+        resultLabel.setText(""); // Xóa thông báo cũ
+    }
+
+    // Hàm helper nạp ảnh mặc định tránh crash UI khi sản phẩm không đính kèm ảnh
+    private void loadDefaultImage() {
         try {
             Image image = new Image(getClass().getResourceAsStream("/images/default_item.png"));
             itemImageView.setImage(image);
         } catch (Exception e) {
             System.out.println("Không tìm thấy ảnh sản phẩm mặc định.");
         }
-
-        this.secondsRemaining = 300;
-        setupTimer();
     }
 
     private void setupBidLogTable() {
@@ -147,8 +214,8 @@ public class BidderController implements Initializable {
         colAmount.setCellValueFactory(new PropertyValueFactory<>("amount"));
         colTime.setCellValueFactory(new PropertyValueFactory<>("time"));
 
-        ObservableList<Bid> history = FXCollections.observableArrayList();
-        bidTable.setItems(history);
+        // Liên kết ObservableList trực tiếp vào TableView
+        bidTable.setItems(bidHistoryList);
     }
 
     private void setupTimer() {
@@ -213,7 +280,7 @@ public class BidderController implements Initializable {
             dialog.setTitle("Profile");
             dialog.setScene(new javafx.scene.Scene(root));
             dialog.showAndWait();
-            setupUser();
+            setupUser(); // Cập nhật lại số dư ví hoặc tên hiển thị nếu có thay đổi trong Profile
         } catch (java.io.IOException e) {
             e.printStackTrace();
         }
@@ -232,6 +299,7 @@ public class BidderController implements Initializable {
             e.printStackTrace();
         }
     }
+
     @FXML
     private void handleRefresh() {
         networkService.requestActiveAuctions();

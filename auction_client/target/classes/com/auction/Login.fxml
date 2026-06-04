@@ -5,8 +5,6 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.control.TextField?>
-<?import javafx.scene.control.RadioButton?>
-<?import javafx.scene.control.ToggleGroup?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.layout.HBox?>
 
@@ -17,49 +15,37 @@
       fx:controller="com.auction.client.controller.LoginController"
       stylesheets="@style.css">
 
-   <fx:define>
-      <ToggleGroup fx:id="roleGroup"/>
-   </fx:define>
-
    <children>
       <VBox alignment="TOP_LEFT" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="580.0" prefWidth="440.0" spacing="20.0" style="-fx-background-color: #ffffff; -fx-background-radius: 10px; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 5);">
          <children>
             <VBox alignment="TOP_CENTER" spacing="10.0">
                <children>
-                  <Label text="LOGIN" style="-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #000000;" />
+                  <Label text="ĐĂNG NHẬP" style="-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #000000;" />
                </children>
             </VBox>
 
             <VBox spacing="8.0">
                <children>
-                  <Label text="Username" style="-fx-font-size: 14px; -fx-text-fill: #000000;" />
-                  <TextField fx:id="usernameField" promptText="name" styleClass="input-field" />
+                  <Label text="Tên đăng nhập" style="-fx-font-size: 14px; -fx-text-fill: #000000;" />
+                  <TextField fx:id="usernameField" promptText="tên" styleClass="input-field" />
                </children>
             </VBox>
 
             <VBox spacing="8.0">
                <children>
-                  <Label text="Password" style="-fx-font-size: 14px; -fx-text-fill: #000000;" />
-                  <PasswordField fx:id="passwordField" promptText="pass" styleClass="input-field" />
+                  <Label text="Mật khẩu" style="-fx-font-size: 14px; -fx-text-fill: #000000;" />
+                  <PasswordField fx:id="passwordField" promptText="mật khẩu" styleClass="input-field" />
                </children>
             </VBox>
 
-            <HBox spacing="20" alignment="CENTER">
-               <children>
-                  <RadioButton fx:id="bidderRadio" text="Bidder" toggleGroup="$roleGroup" selected="true" />
-                  <RadioButton fx:id="sellerRadio" text="Seller" toggleGroup="$roleGroup" />
-                  <RadioButton fx:id="adminRadio" text="Admin" toggleGroup="$roleGroup" />
-               </children>
-            </HBox>
+            <Button fx:id="loginButton" onAction="#handleLogin" text="ĐĂNG NHẬP" maxWidth="1.7976931348623157E308" styleClass="login-button" style="-fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-font-size: 14px; -fx-border-color: #3b82f6; -fx-background-color: #3b82f6" />
 
-            <Button fx:id="loginButton" onAction="#handleLogin" text="LOGIN" maxWidth="1.7976931348623157E308" styleClass="login-button" style="-fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-font-size: 14px; -fx-border-color: #3b82f6; -fx-background-color: #3b82f6" />
-
-            <Label fx:id="messageLabel" text="" textFill="red" />
+            <Label fx:id="messageLabel" text="" textFill="red" visible="false" />
 
             <HBox alignment="CENTER" spacing="5.0">
                <children>
-                  <Label text="Don't have an account yet?" style="-fx-font-size: 14px; -fx-text-fill: #6b7280;" />
-                  <Button onAction="#handleBackToRegister" text="Register" style="-fx-background-color: transparent; -fx-padding: 0; -fx-text-fill: #3b82f6; -fx-font-weight: bold; -fx-font-size: 14px; -fx-cursor: hand;" />
+                  <Label text="Bạn chưa có tài khoản?" style="-fx-font-size: 14px; -fx-text-fill: #6b7280;" />
+                  <Button onAction="#handleBackToRegister" text="Đăng kí" style="-fx-background-color: transparent; -fx-padding: 0; -fx-text-fill: #3b82f6; -fx-font-weight: bold; -fx-font-size: 14px; -fx-cursor: hand;" />
                </children>
                <padding>
                   <Insets top="10.0" />

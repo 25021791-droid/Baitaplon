@@ -13,11 +13,11 @@ public class Admin extends User {
     public void manageAuctions() {
         System.out.println("Managing auctions...");
     }
-    
+
     public void resolveDispute() {
         System.out.println("Resolving disputes...");
     }
- 
+
     @Override
     public void displayDashboard() {
         System.out.println("Admin Dashboard");

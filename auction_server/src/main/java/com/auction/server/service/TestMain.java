@@ -21,7 +21,9 @@ public class TestMain {
 
         // -- Test Login
         if (testLogin) {
-            User user = UserService.login("user", "aaa");
+            UserService userService1 = new UserService();
+
+            User user = userService1.login("user", "aaa");
 
             if (user != null) {
                 System.out.println("=> Login OK! Chào mừng: " + user.getName());

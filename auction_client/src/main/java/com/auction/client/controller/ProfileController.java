@@ -3,6 +3,7 @@ package com.auction.client.controller;
 import com.auction.client.service.NetworkClientService;
 import com.auction.client.utils.UserSession;
 import com.auction.common.model.User;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Label;
@@ -34,32 +35,43 @@ public class ProfileController implements Initializable {
             emailField.setText(currentUser.getEmail());
         }
 
+        // 🔥 ĐÃ FIX: Bọc Platform.runLater để tránh lỗi xung đột luồng JavaFX khi nhận dữ liệu mạng
         networkService.setOnProfileUpdateResult(isSuccess -> {
-            if (isSuccess) {
-                currentUser.setName(usernameField.getText().trim());
-                currentUser.setEmail(emailField.getText().trim());
-                showProfileMessage("Profile updated successfully.", "green");
-            } else {
-                showProfileMessage("Cannot update profile. Username or email may already exist.", "red");
-            }
+            Platform.runLater(() -> {
+                if (isSuccess) {
+                    // Cập nhật thông tin đối tượng User hiện tại
+                    currentUser.setName(usernameField.getText().trim());
+                    currentUser.setEmail(emailField.getText().trim());
+
+                    // Ghi đè lại vào UserSession để đồng bộ tên mới ra các màn hình ngoài
+                    UserSession.setUser(currentUser);
+
+                    showProfileMessage("Hồ sơ đã được cập nhật thành công.", "green");
+                } else {
+                    showProfileMessage("Cập nhật thất bại. Tên đăng nhập hoặc email có thể đã tồn tại!", "red");
+                }
+            });
         });
 
+        // 🔥 ĐÃ FIX: Đảm bảo việc xóa trường text và hiển thị thông báo mật khẩu chạy trên UI Thread
         networkService.setOnPasswordChangeResult(isSuccess -> {
-            if (isSuccess) {
-                currentPasswordField.clear();
-                newPasswordField.clear();
-                confirmPasswordField.clear();
-                showPasswordMessage("Password changed successfully.", "green");
-            } else {
-                showPasswordMessage("Cannot change password. Check your current password.", "red");
-            }
+            Platform.runLater(() -> {
+                if (isSuccess) {
+                    currentPasswordField.clear();
+                    newPasswordField.clear();
+                    confirmPasswordField.clear();
+                    showPasswordMessage("Đổi mật khẩu thành công.", "green");
+                } else {
+                    showPasswordMessage("Mật khẩu cũ không chính xác. Vui lòng thử lại!", "red");
+                }
+            });
         });
     }
 
     @FXML
     private void handleSaveProfile() {
         if (currentUser == null) {
-            showProfileMessage("No user is logged in.", "red");
+            showProfileMessage("Hết phiên làm việc. Vui lòng đăng nhập lại.", "red");
             return;
         }
 
@@ -67,28 +79,28 @@ public class ProfileController implements Initializable {
         String email = emailField.getText().trim();
 
         if (username.isEmpty() || email.isEmpty()) {
-            showProfileMessage("Username and email are required.", "red");
+            showProfileMessage("Tên người dùng và email không được để trống.", "red");
             return;
         }
 
         if (username.contains(",") || email.contains(",")) {
-            showProfileMessage("Username and email cannot contain commas.", "red");
+            showProfileMessage("Tên hoặc email không được chứa ký tự dấu phẩy (,).", "red");
             return;
         }
 
         if (!isValidEmail(email)) {
-            showProfileMessage("Invalid email.", "red");
+            showProfileMessage("Định dạng email không hợp lệ.", "red");
             return;
         }
 
-        showProfileMessage("Saving profile...", "black");
+        showProfileMessage("Đang gửi yêu cầu lưu cấu hình...", "black");
         networkService.updateProfile(currentUser.getId(), username, email);
     }
 
     @FXML
     private void handleChangePassword() {
         if (currentUser == null) {
-            showPasswordMessage("No user is logged in.", "red");
+            showPasswordMessage("Hết phiên làm việc. Vui lòng đăng nhập lại.", "red");
             return;
         }
 
@@ -97,21 +109,21 @@ public class ProfileController implements Initializable {
         String confirmPassword = confirmPasswordField.getText();
 
         if (currentPassword.isEmpty() || newPassword.isEmpty() || confirmPassword.isEmpty()) {
-            showPasswordMessage("All password fields are required.", "red");
+            showPasswordMessage("Vui lòng điền đầy đủ thông tin các trường mật khẩu.", "red");
             return;
         }
 
         if (currentPassword.contains(",") || newPassword.contains(",")) {
-            showPasswordMessage("Passwords cannot contain commas.", "red");
+            showPasswordMessage("Mật khẩu không được chứa ký tự dấu phẩy (,).", "red");
             return;
         }
 
         if (!newPassword.equals(confirmPassword)) {
-            showPasswordMessage("New password does not match.", "red");
+            showPasswordMessage("Mật khẩu mới xác nhận không trùng khớp!", "red");
             return;
         }
 
-        showPasswordMessage("Changing password...", "black");
+        showPasswordMessage("Đang thực hiện đổi mật khẩu...", "black");
         networkService.changePassword(currentUser.getId(), currentPassword, newPassword);
     }
 

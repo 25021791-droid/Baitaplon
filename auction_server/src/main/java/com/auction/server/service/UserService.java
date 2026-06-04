@@ -8,7 +8,9 @@ import com.auction.common.model.User;
 import java.sql.*;
 
 public class UserService {
-    public static User login(String username, String password) {
+
+    // ĐÃ SỬA: Loại bỏ từ khóa static để đồng bộ với cơ chế khởi tạo đối tượng (new UserService) từ ClientHandler
+    public User login(String username, String password) {
         String query = "SELECT * FROM users WHERE username = ?";
         System.out.println("[Server] Login start: " + username);
 
@@ -56,6 +58,39 @@ public class UserService {
         }
     }
 
+    /**
+     * 🔥 BỔ SUNG: Lấy thông tin User theo ID để kiểm tra ví và quyền hạn khi thực hiện Đặt giá (Bid)
+     */
+    public User getUserById(int userId) {
+        String query = "SELECT * FROM users WHERE id = ?";
+        try (Connection conn = DatabaseService.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+
+            pstmt.setInt(1, userId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    String role = rs.getString("role");
+                    int id = rs.getInt("id");
+                    String name = rs.getString("username");
+                    String email = rs.getString("email");
+                    double balance = rs.getDouble("balance");
+
+                    if ("ADMIN".equals(role)) {
+                        return new Admin(id, name, email);
+                    } else if ("BIDDER".equals(role)) {
+                        return new Bidder(id, name, email, balance);
+                    } else {
+                        return new Seller(id, name, email);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[Server] Lỗi khi truy vấn thông tin User theo ID: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     public boolean register(String username, String rawPassword, String email, String role) {
         if (isUsernameExists(username)) {
             System.out.println("[Server] Username already exists!");
@@ -76,7 +111,7 @@ public class UserService {
             pstmt.setString(2, hashedPass);
             pstmt.setString(3, email);
             pstmt.setString(4, role);
-            pstmt.setDouble(5, 100000.0);
+            pstmt.setDouble(5, 100000.0); // Số dư ví thử nghiệm mặc định
 
             boolean success = pstmt.executeUpdate() > 0;
             System.out.println("[Server] Insert finished.");
@@ -142,12 +177,11 @@ public class UserService {
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, username);
-            ResultSet rs = pstmt.executeQuery();
-
-            if (rs.next()){
-                count = rs.getInt(1);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()){
+                    count = rs.getInt(1);
+                }
             }
-
         } catch (SQLException e) {
             e.printStackTrace();
             return false;

@@ -39,16 +39,13 @@ public class SellerController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
         this.networkService = NetworkClientService.getInstance();
 
-        // ========== SETUP BẢNG ==========
         setupMyAuctionsTable();
 
-        // ========== LOAD DANH SÁCH ==========
         User currentUser = UserSession.getUser();
         if (currentUser != null) {
             networkService.requestMyAuctions(currentUser.getId());
         }
 
-        // ========== CALLBACK: Nhận danh sách auction của seller ==========
         networkService.setOnMyAuctionsReceived(auctions -> {
             Platform.runLater(() -> {
                 tableMyAuctions.getItems().clear();
@@ -57,7 +54,6 @@ public class SellerController implements Initializable {
             });
         });
 
-        // ========== CALLBACK: Kết quả tạo auction ==========
         networkService.setOnCreateAuctionResult(isSuccess -> {
             Platform.runLater(() -> {
                 if (isSuccess) {
@@ -67,7 +63,6 @@ public class SellerController implements Initializable {
                     lblImageName.setText("Chưa chọn ảnh");
                     imgPreview.setVisible(false);
                     selectedImageFile = null;
-                    // Refresh danh sách
                     User user = UserSession.getUser();
                     if (user != null) {
                         networkService.requestMyAuctions(user.getId());
@@ -78,7 +73,6 @@ public class SellerController implements Initializable {
             });
         });
 
-        // ========== SỰ KIỆN NÚT ==========
         btnCreateAuction.setOnAction(event -> handleCreateAuction());
         btnChooseImage.setOnAction(event -> handleChooseImage());
     }
