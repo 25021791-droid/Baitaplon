@@ -1,47 +1,56 @@
 package com.auction.common.model;
 
-public abstract class User {
-	private int userId;
-	private String userName;
+public abstract class User extends Entity<Integer> {
+
+	private String name;
 	private String email;
 	private String role;
 	private boolean isLoggedIn;
 
-	public User(int userId, String userName, String email, String role) {
-		this.userId = userId;
-		this.userName = userName;
+	public User(Integer userId, String name, String email, String role) {
+		super(userId);
+		this.name = name;
 		this.email = email;
-		this.isLoggedIn = false;
 		this.role = role;
+		this.isLoggedIn = false;
 	}
-	
-	public int getId() {
-		return this.userId;
-	}
+
 	public String getName() {
-		return this.userName;
+		return this.name;
 	}
-	public void setName(String userName) {
-		this.userName = userName;
+
+	public void setName(String name) {
+		this.name = name;
 	}
+
 	public String getEmail() {
 		return this.email;
 	}
+
 	public void setEmail(String email) {
 		this.email = email;
 	}
+
 	public String getRole() {
 		return this.role;
 	}
 
-    public void logout() {
-        if (isLoggedIn) {
-            isLoggedIn = false;
-            System.out.println("Logout successful.");
-        }
-        else {
-            System.out.println("You are not logged in.");
-        }
-    }
+	public boolean isLoggedIn() {
+		return this.isLoggedIn;
+	}
+
+	public void setLoggedIn(boolean loggedIn) {
+		this.isLoggedIn = loggedIn;
+	}
+
+	public void logout() {
+		if (isLoggedIn) {
+			isLoggedIn = false;
+			System.out.println("Logout successful.");
+		} else {
+			System.out.println("You are not logged in.");
+		}
+	}
+
 	public abstract void displayDashboard();
 }

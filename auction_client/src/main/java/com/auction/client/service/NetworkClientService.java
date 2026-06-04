@@ -9,6 +9,9 @@ import java.net.Socket;
 import java.util.List;
 import java.util.function.Consumer;
 import java.io.File;
+import java.nio.file.Files;
+import java.util.Base64;
+
 public class NetworkClientService {
     private static NetworkClientService instance;
     private Socket socket;
@@ -21,30 +24,36 @@ public class NetworkClientService {
     private Consumer<String> onNewBidBroadcast;
     private Consumer<Boolean> onRegisterResult;
     private Consumer<List<Auction>> onActiveAuctionsReceived;
-
     private Consumer<List<Auction>> onEndedAuctionsReceived;
-    public void setOnEndedAuctionsReceived(Consumer<List<Auction>> c) {
-        this.onEndedAuctionsReceived = c;
-    }
     private Consumer<Boolean> onProfileUpdateResult;
     private Consumer<Boolean> onCancelAuctionResult;
-    public void setOnCancelAuctionResult(Consumer<Boolean> c) { this.onCancelAuctionResult = c; }
     private Consumer<Boolean> onPasswordChangeResult;
+    private Consumer<List<Auction>> onMyAuctionsReceived;
+    private Consumer<List<Auction>> onAllAuctionsReceived;
+    private Consumer<List<Auction>> onPendingAuctionsReceived;
+    private Consumer<Boolean> onApproveAuctionResult;
+    private Consumer<Boolean> onCreateAuctionResult;
+
+    // ================= GETTERS & SETTERS CALLBACKS =================
+
+    public void setOnEndedAuctionsReceived(Consumer<List<Auction>> c) { this.onEndedAuctionsReceived = c; }
+    public void setOnCancelAuctionResult(Consumer<Boolean> c) { this.onCancelAuctionResult = c; }
     public void setOnRegisterResult(Consumer<Boolean> callback) { this.onRegisterResult = callback; }
     public void setOnActiveAuctionsReceived(Consumer<List<Auction>> callback) { this.onActiveAuctionsReceived = callback; }
     public void setOnProfileUpdateResult(Consumer<Boolean> callback) { this.onProfileUpdateResult = callback; }
     public void setOnPasswordChangeResult(Consumer<Boolean> callback) { this.onPasswordChangeResult = callback; }
-    private Consumer<List<Auction>> onMyAuctionsReceived;
     public void setOnMyAuctionsReceived(Consumer<List<Auction>> c) { this.onMyAuctionsReceived = c; }
-    private Consumer<List<Auction>> onAllAuctionsReceived;
     public void setOnAllAuctionsReceived(Consumer<List<Auction>> c) { this.onAllAuctionsReceived = c; }
-    public void requestMyAuctions(int sellerId) {
-        if (!isConnected()) return;
-        try {
-            out.writeUTF("GET_MY_AUCTIONS," + sellerId);
-            out.flush();
-        } catch (IOException e) { e.printStackTrace(); }
-    }
+    public void setOnPendingAuctionsReceived(Consumer<List<Auction>> callback) { this.onPendingAuctionsReceived = callback; }
+    public void setOnApproveAuctionResult(Consumer<Boolean> callback) { this.onApproveAuctionResult = callback; }
+    public void setOnLoginSuccess(Consumer<User> callback) { this.onLoginSuccess = callback; }
+    public void setOnLoginFail(Consumer<String> callback) { this.onLoginFail = callback; }
+    public void setOnBidResult(Consumer<Boolean> callback) { this.onBidResult = callback; }
+    public void setOnNewBidBroadcast(Consumer<String> callback) { this.onNewBidBroadcast = callback; }
+    public void setOnCreateAuctionResult(Consumer<Boolean> callback) { this.onCreateAuctionResult = callback; }
+
+    // ================= KHỞI TẠO & KẾT NỐI =================
+
     private NetworkClientService() {
         Thread initThread = new Thread(() -> {
             try {
@@ -62,8 +71,8 @@ public class NetworkClientService {
             }
         });
 
-        initThread.setDaemon(true); // Đảm bảo Thread này tự tắt khi tắt App
-        initThread.start(); // Kích hoạt chạy ngầm ngay lập tức
+        initThread.setDaemon(true);
+        initThread.start();
     }
 
     public static NetworkClientService getInstance() {
@@ -74,20 +83,33 @@ public class NetworkClientService {
     public boolean isConnected() {
         return socket != null && socket.isConnected() && !socket.isClosed() && out != null;
     }
-    private Consumer<List<Auction>> onPendingAuctionsReceived;
-    private Consumer<Boolean> onApproveAuctionResult;
 
-    public void setOnPendingAuctionsReceived(Consumer<List<Auction>> callback) {
-        this.onPendingAuctionsReceived = callback;
+    // 🔥 HÀM TIỆN ÍCH: Gửi dữ liệu bằng mảng byte để vượt qua giới hạn 64KB của writeUTF
+    private void sendMessage(String message) throws IOException {
+        byte[] payload = message.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        out.writeInt(payload.length);
+        out.write(payload);
+        out.flush();
     }
-    public void setOnApproveAuctionResult(Consumer<Boolean> callback) {
-        this.onApproveAuctionResult = callback;
-    }
+
+    // ================= VÒNG LẶP LẮNG NGHE TỪ SERVER =================
+
     private void startListening() {
         Thread listenerThread = new Thread(() -> {
             try {
                 while (true) {
-                    String message = in.readUTF();
+                    // 🔥 Đọc kích thước mảng byte thay vì dùng readUTF()
+                    int length = in.readInt();
+
+                    if (length > 20 * 1024 * 1024) {
+                        System.err.println("[Cảnh báo] Gói tin quá lớn (>20MB), bỏ qua để chống tràn RAM!");
+                        continue;
+                    }
+
+                    byte[] payload = new byte[length];
+                    in.readFully(payload);
+                    String message = new String(payload, java.nio.charset.StandardCharsets.UTF_8);
+
                     System.out.println("[Client nhận]: " + message);
                     String[] parts = message.split(",");
                     String command = parts[0];
@@ -102,9 +124,7 @@ public class NetworkClientService {
                         User user = null;
                         if ("ADMIN".equals(role)) user = new Admin(id, name, email);
                         else if ("SELLER".equals(role)) user = new Seller(id, name, email);
-                        else {
-                            user = new Bidder(id, name, email, balance);
-                        }
+                        else user = new Bidder(id, name, email, balance);
 
                         if (onLoginSuccess != null) {
                             User finalUser = user;
@@ -114,10 +134,10 @@ public class NetworkClientService {
                     else if ("LOGIN_FAIL".equals(command)) {
                         if (onLoginFail != null) Platform.runLater(() -> onLoginFail.accept("Đăng nhập thất bại!"));
                     }
-                    else if ("BID_OK".equals(command)) {
+                    else if ("BID_SUCCESS".equals(command) || "BID_OK".equals(command)) {
                         if (onBidResult != null) Platform.runLater(() -> onBidResult.accept(true));
                     }
-                    else if ("BID_FAILED".equals(command)) {
+                    else if ("BID_FAIL".equals(command)) {
                         if (onBidResult != null) Platform.runLater(() -> onBidResult.accept(false));
                     }
                     else if ("NEW_BID".equals(command)) {
@@ -142,7 +162,7 @@ public class NetworkClientService {
                                 String[] d = raw.split("\\|");
                                 if (d.length >= 4) {
                                     Auction a = new Auction(new Item(0, d[1]), Double.parseDouble(d[2]));
-                                    a.setId(Integer.parseInt(d[0]));
+                                    a.setId(Long.parseLong(d[0]));
                                     a.setStatus(AuctionStatus.valueOf(d[3]));
                                     list.add(a);
                                 }
@@ -157,14 +177,15 @@ public class NetworkClientService {
                     }
                     else if ("PASSWORD_CHANGE_FAIL".equals(command)) {
                         if (onPasswordChangeResult != null) Platform.runLater(() -> onPasswordChangeResult.accept(false));
-                    }else if ("MY_AUCTIONS".equals(command)) {
+                    }
+                    else if ("MY_AUCTIONS".equals(command)) {
                         List<Auction> list = new java.util.ArrayList<>();
                         if (parts.length > 1 && !parts[1].isEmpty()) {
                             for (String raw : parts[1].split(";")) {
                                 String[] d = raw.split("\\|");
                                 if (d.length >= 4) {
                                     Auction a = new Auction(new Item(0, d[1]), Double.parseDouble(d[2]));
-                                    a.setId(Integer.parseInt(d[0]));
+                                    a.setId(Long.parseLong(d[0]));
                                     a.setStatus(AuctionStatus.valueOf(d[3]));
                                     list.add(a);
                                 }
@@ -175,13 +196,12 @@ public class NetworkClientService {
                         }
                     }
                     else if ("CREATE_AUCTION_SUCCESS".equals(command)) {
-                        if (onCreateAuctionResult != null)
-                            Platform.runLater(() -> onCreateAuctionResult.accept(true));
+                        if (onCreateAuctionResult != null) Platform.runLater(() -> onCreateAuctionResult.accept(true));
                     }
                     else if ("CREATE_AUCTION_FAIL".equals(command)) {
-                        if (onCreateAuctionResult != null)
-                            Platform.runLater(() -> onCreateAuctionResult.accept(false));
-                    }else if ("ACTIVE_AUCTIONS".equals(command)) {
+                        if (onCreateAuctionResult != null) Platform.runLater(() -> onCreateAuctionResult.accept(false));
+                    }
+                    else if ("ACTIVE_AUCTIONS".equals(command)) {
                         List<Auction> auctionList = new java.util.ArrayList<>();
 
                         if (parts.length > 1 && !parts[1].isEmpty()) {
@@ -190,65 +210,58 @@ public class NetworkClientService {
                             for (String raw : auctionsRaw) {
                                 String[] data = raw.split("\\|");
 
-                                int auctionId = Integer.parseInt(data[0]);
-                                String itemName = data[1];
-                                double currentPrice = Double.parseDouble(data[2]);
+                                if (data.length >= 3) {
+                                    long auctionId = Long.parseLong(data[0]);
+                                    String itemName = data[1];
+                                    double currentPrice = Double.parseDouble(data[2]);
+                                    String base64Image = (data.length >= 4) ? data[3] : "NO_IMAGE";
 
-                                Item item = new Item((int) auctionId, itemName);
-                                Auction auction = new Auction(item, currentPrice);
-                                auction.setId(auctionId);
-                                auction.setCurrentPrice(currentPrice);
+                                    Item item = new Item((int) auctionId, itemName) {};
+                                    item.setImagePath(base64Image);
 
-                                auctionList.add(auction);
+                                    Auction auction = new Auction(item, currentPrice);
+                                    auction.setId(auctionId);
+                                    auction.setCurrentPrice(currentPrice);
+
+                                    auctionList.add(auction);
+                                }
                             }
                         }
 
-                        if (onActiveAuctionsReceived != null) {
-                            Platform.runLater(() -> onActiveAuctionsReceived.accept(auctionList));
-                        }
-                        if (onAllAuctionsReceived != null) {
-                            Platform.runLater(() -> onAllAuctionsReceived.accept(auctionList));
-                        }
+                        if (onActiveAuctionsReceived != null) Platform.runLater(() -> onActiveAuctionsReceived.accept(auctionList));
+                        if (onAllAuctionsReceived != null) Platform.runLater(() -> onAllAuctionsReceived.accept(auctionList));
                     }
                     else if ("CANCEL_AUCTION_SUCCESS".equals(command)) {
                         System.out.println("[Client] Hủy auction thành công");
-                        if (onCancelAuctionResult != null)
-                            Platform.runLater(() -> onCancelAuctionResult.accept(true));
+                        if (onCancelAuctionResult != null) Platform.runLater(() -> onCancelAuctionResult.accept(true));
                     }
                     else if ("CANCEL_AUCTION_FAIL".equals(command)) {
                         System.out.println("[Client] Hủy auction thất bại");
-                        if (onCancelAuctionResult != null)
-                            Platform.runLater(() -> onCancelAuctionResult.accept(false));
+                        if (onCancelAuctionResult != null) Platform.runLater(() -> onCancelAuctionResult.accept(false));
                     }
                     else if ("PENDING_AUCTIONS".equals(command)) {
                         System.out.println("[Client] ===== NHẬN PENDING_AUCTIONS =====");
-                        System.out.println("[Client] Raw response: " + message);
-
                         List<Auction> auctionList = new java.util.ArrayList<>();
 
                         if (parts.length > 1 && !parts[1].isEmpty()) {
                             String[] auctionsRaw = parts[1].split(";");
-                            System.out.println("[Client] Số auction parse được: " + auctionsRaw.length);
 
                             for (String raw : auctionsRaw) {
-                                System.out.println("[Client] Đang parse: " + raw);
                                 String[] data = raw.split("\\|");
 
                                 if (data.length >= 3) {
                                     String idStr = data[0];
                                     String itemName = data[1];
                                     String priceStr = data[2];
-                                    System.out.println("[Client] ID=" + idStr + " Name=" + itemName + " Price=" + priceStr);
 
-                                    // Xử lý ID null
-                                    int auctionId = 0;
+                                    long auctionId = 0;
                                     if (!"null".equals(idStr) && !idStr.isEmpty()) {
-                                        auctionId = Integer.parseInt(idStr);
+                                        auctionId = Long.parseLong(idStr);
                                     }
 
                                     double currentPrice = Double.parseDouble(priceStr);
 
-                                    Item item = new Item(auctionId, itemName);
+                                    Item item = new Item((int) auctionId, itemName);
                                     Auction auction = new Auction(item, currentPrice);
                                     auction.setId(auctionId);
                                     auction.setCurrentPrice(currentPrice);
@@ -259,25 +272,16 @@ public class NetworkClientService {
                             }
                         }
 
-                        System.out.println("[Client] Tổng auction parse được: " + auctionList.size());
-
                         if (onPendingAuctionsReceived != null) {
                             List<Auction> finalList = auctionList;
-                            Platform.runLater(() -> {
-                                System.out.println("[Client] Gọi callback với " + finalList.size() + " auction");
-                                onPendingAuctionsReceived.accept(finalList);
-                            });
-                        } else {
-                            System.out.println("[Client] *** CẢNH BÁO: onPendingAuctionsReceived = NULL ***");
+                            Platform.runLater(() -> onPendingAuctionsReceived.accept(finalList));
                         }
                     }
                     else if ("APPROVE_AUCTION_SUCCESS".equals(command)) {
-                        if (onApproveAuctionResult != null)
-                            Platform.runLater(() -> onApproveAuctionResult.accept(true));
+                        if (onApproveAuctionResult != null) Platform.runLater(() -> onApproveAuctionResult.accept(true));
                     }
                     else if ("APPROVE_AUCTION_FAIL".equals(command)) {
-                        if (onApproveAuctionResult != null)
-                            Platform.runLater(() -> onApproveAuctionResult.accept(false));
+                        if (onApproveAuctionResult != null) Platform.runLater(() -> onApproveAuctionResult.accept(false));
                     }
                 }
             } catch (IOException e) {
@@ -288,97 +292,73 @@ public class NetworkClientService {
         listenerThread.start();
     }
 
-    public void setOnLoginSuccess(Consumer<User> callback) { this.onLoginSuccess = callback; }
-    public void setOnLoginFail(Consumer<String> callback) { this.onLoginFail = callback; }
-    public void setOnBidResult(Consumer<Boolean> callback) { this.onBidResult = callback; }
-    public void setOnNewBidBroadcast(Consumer<String> callback) { this.onNewBidBroadcast = callback; }
+    // ================= CÁC HÀM GỬI YÊU CẦU LÊN SERVER =================
+
+    public void requestMyAuctions(int sellerId) {
+        if (!isConnected()) return;
+        try {
+            sendMessage("GET_MY_AUCTIONS," + sellerId);
+        } catch (IOException e) { e.printStackTrace(); }
+    }
 
     public void login(String username, String password) {
         if (!isConnected()) {
-            if (onLoginFail != null) {
-                Platform.runLater(() -> onLoginFail.accept("Cannot connect to server. Start the server first."));
-            }
+            if (onLoginFail != null) Platform.runLater(() -> onLoginFail.accept("Cannot connect to server. Start the server first."));
             return;
         }
-
         try {
-            out.writeUTF("LOGIN," + username + "," + password);
-            out.flush();
+            sendMessage("LOGIN," + username + "," + password);
         } catch (IOException e) {
-            if (onLoginFail != null) {
-                Platform.runLater(() -> onLoginFail.accept("Cannot send login request."));
-            }
+            if (onLoginFail != null) Platform.runLater(() -> onLoginFail.accept("Cannot send login request."));
             e.printStackTrace();
         }
     }
 
-    public void placeBid(int auctionId, int userId, double amount) {
+    public void placeBid(long auctionId, int userId, double amount) {
         if (!isConnected()) {
-            if (onBidResult != null) {
-                Platform.runLater(() -> onBidResult.accept(false));
-            }
+            if (onBidResult != null) Platform.runLater(() -> onBidResult.accept(false));
             return;
         }
-
         try {
-            out.writeUTF(String.format("BID,%d,%d,%.2f", auctionId, userId, amount));
-            out.flush();
+            sendMessage("BID," + auctionId + "," + userId + "," + amount);
         } catch (IOException e) { e.printStackTrace(); }
     }
 
     public void register(String username, String password, String email, String role) {
         if (!isConnected()) {
-            if (onRegisterResult != null) {
-                Platform.runLater(() -> onRegisterResult.accept(false));
-            }
+            if (onRegisterResult != null) Platform.runLater(() -> onRegisterResult.accept(false));
             return;
         }
-
         try {
-            out.writeUTF(String.format("REGISTER,%s,%s,%s,%s", username, password, email, role));
-            out.flush();
+            sendMessage(String.format("REGISTER,%s,%s,%s,%s", username, password, email, role));
         } catch (IOException e) {
-            if (onRegisterResult != null) {
-                Platform.runLater(() -> onRegisterResult.accept(false));
-            }
+            if (onRegisterResult != null) Platform.runLater(() -> onRegisterResult.accept(false));
             e.printStackTrace();
         }
     }
 
     public void updateProfile(int userId, String username, String email) {
         if (!isConnected()) {
-            if (onProfileUpdateResult != null) {
-                Platform.runLater(() -> onProfileUpdateResult.accept(false));
-            }
+            if (onProfileUpdateResult != null) Platform.runLater(() -> onProfileUpdateResult.accept(false));
             return;
         }
-
         try {
-            out.writeUTF(String.format("UPDATE_PROFILE,%d,%s,%s", userId, username, email));
-            out.flush();
+            sendMessage(String.format("UPDATE_PROFILE,%d,%s,%s", userId, username, email));
         } catch (IOException e) {
-            if (onProfileUpdateResult != null) {
-                Platform.runLater(() -> onProfileUpdateResult.accept(false));
-            }
+            if (onProfileUpdateResult != null) Platform.runLater(() -> onProfileUpdateResult.accept(false));
             e.printStackTrace();
         }
     }
 
     public void changePassword(int userId, String currentPassword, String newPassword) {
         if (!isConnected()) {
-            if (onPasswordChangeResult != null) {
-                Platform.runLater(() -> onPasswordChangeResult.accept(false));
-            }
+            if (onPasswordChangeResult != null) Platform.runLater(() -> onPasswordChangeResult.accept(false));
             return;
         }
-
         try {
-            out.writeUTF(String.format("CHANGE_PASSWORD,%d,%s,%s", userId, currentPassword, newPassword));
-            out.flush();
+            sendMessage(String.format("CHANGE_PASSWORD,%d,%s,%s", userId, currentPassword, newPassword));
         } catch (IOException e) {
-            if (onPasswordChangeResult != null) {
-                Platform.runLater(() -> onPasswordChangeResult.accept(false));
-            }
+            if (onPasswordChangeResult != null) Platform.runLater(() -> onPasswordChangeResult.accept(false));
             e.printStackTrace();
         }
     }
@@ -388,81 +368,45 @@ public class NetworkClientService {
             System.err.println("[Error] Cannot request auctions because the client is not connected.");
             return;
         }
-
         try {
             System.out.println("[Client] Đang yêu cầu danh sách phiên đấu giá từ Server...");
-            out.writeUTF("GET_ACTIVE_AUCTIONS");
-            out.flush();
+            sendMessage("GET_ACTIVE_AUCTIONS");
         } catch (IOException e) {
             System.err.println("[Lỗi] Không thể gửi yêu cầu lấy danh sách!");
             e.printStackTrace();
         }
     }
-    // ========== THÊM MỚI: Callback cho tạo auction ==========
-    private Consumer<Boolean> onCreateAuctionResult;
 
-    public void setOnCreateAuctionResult(Consumer<Boolean> callback) {
-        this.onCreateAuctionResult = callback;
-    }
-
-    /**
-     * Gửi yêu cầu tạo phiên đấu giá mới lên Server.
-     * @param itemName   Tên sản phẩm
-     * @param startPrice Giá khởi điểm
-     * @param sellerId   ID của Seller đang đăng nhập
-     */
     public void createAuction(String itemName, double startPrice, int sellerId, File imageFile) {
         if (!isConnected()) {
-            if (onCreateAuctionResult != null) {
-                Platform.runLater(() -> onCreateAuctionResult.accept(false));
-            }
+            if (onCreateAuctionResult != null) Platform.runLater(() -> onCreateAuctionResult.accept(false));
             return;
         }
-
         try {
-            // Bước 1: Gửi lệnh tạo auction
-            String request = String.format("CREATE_AUCTION,%s,%.2f,%d", itemName, startPrice, sellerId);
-            out.writeUTF(request);
-            out.flush();
-            System.out.println("[Client] Đã gửi lệnh tạo auction");
-
-            // Bước 2: Gửi ảnh (nếu có)
+            String base64Image = "NO_IMAGE";
             if (imageFile != null && imageFile.exists()) {
-                byte[] imageBytes = java.nio.file.Files.readAllBytes(imageFile.toPath());
-
-                // Gửi độ dài ảnh (số byte)
-                out.writeInt(imageBytes.length);
-                out.flush();
-
-                // Gửi toàn bộ bytes của ảnh
-                out.write(imageBytes);
-                out.flush();
-
-                System.out.println("[Client] Đã gửi ảnh: " + imageBytes.length + " bytes");
-            } else {
-                // Không có ảnh → gửi độ dài = 0
-                out.writeInt(0);
-                out.flush();
-                System.out.println("[Client] Không có ảnh đính kèm");
+                byte[] fileContent = Files.readAllBytes(imageFile.toPath());
+                base64Image = Base64.getEncoder().encodeToString(fileContent);
             }
+
+            String request = "CREATE_AUCTION," + itemName + "," + startPrice + "," + sellerId + "," + base64Image;
+
+            sendMessage(request);
+            System.out.println("[Client] Đã gửi lệnh tạo auction kèm ảnh dạng Base64 an toàn.");
 
         } catch (IOException e) {
-            if (onCreateAuctionResult != null) {
-                Platform.runLater(() -> onCreateAuctionResult.accept(false));
-            }
+            if (onCreateAuctionResult != null) Platform.runLater(() -> onCreateAuctionResult.accept(false));
             e.printStackTrace();
         }
     }
-    /**
-     * Admin: Lấy danh sách auction chờ duyệt
-     */
+
     public void requestEndedAuctions() {
         if (!isConnected()) return;
         try {
-            out.writeUTF("GET_ENDED_AUCTIONS");
-            out.flush();
+            sendMessage("GET_ENDED_AUCTIONS");
         } catch (IOException e) { e.printStackTrace(); }
     }
+
     public void requestPendingAuctions() {
         if (!isConnected()) {
             System.err.println("[Client] Không kết nối được đến Server!");
@@ -470,27 +414,23 @@ public class NetworkClientService {
         }
         try {
             System.out.println("[Client] Admin yêu cầu danh sách chờ duyệt");
-            out.writeUTF("GET_PENDING_AUCTIONS");
-            out.flush();
+            sendMessage("GET_PENDING_AUCTIONS");
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-    public void cancelAuction(int auctionId) {
+
+    public void cancelAuction(long auctionId) {
         if (!isConnected()) return;
         try {
-            out.writeUTF("CANCEL_AUCTION," + auctionId);
-            out.flush();
+            sendMessage("CANCEL_AUCTION," + auctionId);
         } catch (IOException e) { e.printStackTrace(); }
     }
-    /**
-     * Admin: Duyệt 1 auction
-     */
-    public void approveAuction(int auctionId) {
+
+    public void approveAuction(long auctionId) {
         if (!isConnected()) return;
         try {
-            out.writeUTF("APPROVE_AUCTION," + auctionId);
-            out.flush();
+            sendMessage("APPROVE_AUCTION," + auctionId);
         } catch (IOException e) {
             e.printStackTrace();
         }

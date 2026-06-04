@@ -34,11 +34,11 @@ public class RegisterController implements Initializable {
             waitingForRegisterResponse = false;
 
             if (isSuccess) {
-                showMessage("Register success! Please login.", "green");
+                showMessage("Đăng kí thành công. Tiếp tục đăng nhập.", "green");
 
                 handleBackToLogin();
             } else {
-                showMessage("Username or email is already in use.", "red");
+                showMessage("Tên hoặc email đã được sử dụng", "red");
             }
         });
     }
@@ -63,28 +63,28 @@ public class RegisterController implements Initializable {
         String confirmPass = confirmPasswordField.getText();
 
         if (user.isEmpty() || email.isEmpty() || pass.isEmpty() || confirmPass.isEmpty() ) {
-            showMessage("You have not entered your account or password.", "red");
+            showMessage("Bạn chưa nhập tài khoản hoặc mật khẩu của mình.", "red");
             return;
         }
 
         if (!pass.equals(confirmPass)) {
-            showMessage("Password does not match.", "red");
+            showMessage("Nhập lại mật khẩu không đúng", "red");
             return;
         }
 
         if (!isValidEmail(email)) {
-            showMessage("Invalid Email!", "red");
+            showMessage("Email sai!", "red");
             return;
         }
 
         if (!NetworkClientService.getInstance().isConnected()) {
-            showMessage("Cannot connect to server. Start the server first.", "red");
+            showMessage("Không thể kết nối đến máy chủ. Vui lòng khởi động máy chủ trước.", "red");
             return;
         }
 
         String role = bidderRadio.isSelected() ? "BIDDER" : "SELLER";
 
-        showMessage("Processing...", "black");
+        showMessage("Đang xử lí...", "black");
         waitingForRegisterResponse = true;
         int currentRequestId = ++registerRequestId;
 
@@ -92,7 +92,7 @@ public class RegisterController implements Initializable {
         timeout.setOnFinished(event -> {
             if (waitingForRegisterResponse && currentRequestId == registerRequestId) {
                 waitingForRegisterResponse = false;
-                showMessage("Register timeout. Check server or database connection.", "red");
+                showMessage("Đăng ký đã hết thời gian chờ. Kiểm tra kết nối máy chủ hoặc cơ sở dữ liệu.", "red");
             }
         });
         timeout.play();
@@ -108,12 +108,12 @@ public class RegisterController implements Initializable {
 
             Stage stage = (Stage) usernameField.getScene().getWindow();
             stage.setScene(new Scene(root));
-            stage.setTitle("Login");
+            stage.setTitle("Đăng nhập");
             stage.show();
 
         } catch (Exception e) {
             e.printStackTrace();
-            showMessage("Error loading Login screen", "red");
+            showMessage("Không thể tải màn hình đăng nhập", "red");
         }
     }
 }

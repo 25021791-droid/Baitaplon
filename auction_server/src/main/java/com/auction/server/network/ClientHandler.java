@@ -1,29 +1,38 @@
 package com.auction.server.network;
-import com.auction.common.model.*;
 
-import java.time.LocalDateTime;
+import com.auction.common.model.Item;
+import com.auction.common.model.AuctionStatus;
 import java.util.List;
 import java.util.Locale;
 import java.io.File;
-
+import com.auction.common.model.Auction;
 import com.auction.server.service.AuctionRepository;
 import com.auction.server.service.AuctionService;
 import com.auction.server.service.ItemRepository;
 import com.auction.server.service.UserService;
-
+import com.auction.common.model.User;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.IOException;
 import java.net.Socket;
+import java.time.LocalDateTime;
+import java.nio.charset.StandardCharsets;
 
 public class ClientHandler implements Runnable {
     private final Socket clientSocket;
-
     private final UserService userService = new UserService();
-
     private final AuctionService auctionService = new AuctionService();
 
     public ClientHandler(Socket socket) {
         this.clientSocket = socket;
+    }
+
+    // 🔥 HÀM TIỆN ÍCH MỚI: Gửi dữ liệu bằng mảng byte (Thay thế cho out.writeUTF)
+    private void sendMessage(DataOutputStream out, String message) throws IOException {
+        byte[] payload = message.getBytes(StandardCharsets.UTF_8);
+        out.writeInt(payload.length);
+        out.write(payload);
+        out.flush();
     }
 
     @Override
@@ -34,13 +43,29 @@ public class ClientHandler implements Runnable {
 
             boolean isRunning = true;
             while (isRunning) {
-                String request = in.readUTF();
-                System.out.println("[Server] Nhận được: " + request);
+                // ====================================================================
+                // 🔥 CƠ CHẾ ĐỌC MỚI: Đọc mảng byte để bypass giới hạn 64KB của readUTF
+                // ====================================================================
+                int length = in.readInt();
 
-                String[] parts = request.split(",");
-                String command = parts[0];
+                // Bảo vệ Server: Chặn các gói tin lớn hơn 20MB để chống tràn RAM (DDoS/OOM)
+                if (length > 20 * 1024 * 1024) {
+                    System.err.println("[Server Cảnh báo] Client gửi gói tin quá lớn (" + length + " bytes). Đóng kết nối!");
+                    break;
+                }
+
+                byte[] payload = new byte[length];
+                in.readFully(payload);
+                String request = new String(payload, StandardCharsets.UTF_8);
+
+                System.out.println("[Server] Nhận được yêu cầu: " + request.substring(0, Math.min(request.length(), 100)) + "...");
+
+                // Tách sơ bộ để nhận diện tên Lệnh (Command)
+                String[] temporaryParts = request.split(",");
+                String command = temporaryParts[0];
 
                 if ("LOGIN".equals(command)) {
+                    String[] parts = request.split(",");
                     String username = parts[1];
                     String password = parts[2];
 
@@ -59,90 +84,84 @@ public class ClientHandler implements Runnable {
                         else if (user instanceof com.auction.common.model.Seller) role = "SELLER";
 
                         String response = String.format(Locale.US, "LOGIN_SUCCESS,%d,%s,%s,%.2f,%s", id, name, email, balance, role);
-                        out.writeUTF(response);
-                        out.flush();
+                        sendMessage(out, response);
                     } else {
-                        out.writeUTF("LOGIN_FAIL");
-                        out.flush();
+                        sendMessage(out, "LOGIN_FAIL");
                     }
 
                 } else if ("BID".equals(command)) {
-                    int auctionId = Integer.parseInt(parts[1]);
-                    int userId = Integer.parseInt(parts[2]);
-                    double bidAmount = Double.parseDouble(parts[3]);
+                    String[] parts = request.split(",");
+                    try {
+                        long auctionId = Long.parseLong(parts[1]);
+                        int bidderId = Integer.parseInt(parts[2]);
+                        double bidAmount = Double.parseDouble(parts[3]);
 
-                    Auction currentAuction = auctionService.getAuctionById(auctionId);
-                    Bidder currentBidder = userService.getBidderById(userId);
-
-                    if (bidAmount < currentAuction.getCurrentPrice() || bidAmount > currentBidder.getBalance()) {
-                        out.writeUTF("BID_FAILED");
-                        out.flush();
-                    } else {
-                        Bid newBid = new Bid(currentBidder, bidAmount);
-                        boolean isBidSaved = auctionService.addBid(auctionId, newBid);
-                        boolean isAuctionUpdated = auctionService.updateCurrentPrice(currentAuction, bidAmount);
-
-                        if (isBidSaved && isAuctionUpdated) {
-                            currentAuction.setCurrentPrice(bidAmount);
-                            currentAuction.getBids().add(newBid);
-                        }
-                        out.writeUTF("BID_OK");
-                        out.flush();
+                        boolean isBidSuccess = auctionService.placeBid(auctionId, bidderId, bidAmount);
+                        sendMessage(out, isBidSuccess ? "BID_SUCCESS" : "BID_FAIL");
+                    } catch (Exception e) {
+                        System.err.println("[Server] Lỗi xử lý đặt giá: " + e.getMessage());
+                        sendMessage(out, "BID_FAIL");
                     }
 
                 } else if ("REGISTER".equals(command)) {
+                    String[] parts = request.split(",");
                     String username = parts[1];
                     String password = parts[2];
                     String email = parts[3];
                     String role = parts[4];
 
-                    System.out.println("[Server] Register start: " + username + " / " + role);
                     boolean isSuccess = userService.register(username, password, email, role);
-                    System.out.println("[Server] Register result: " + isSuccess);
-
-                    if (isSuccess) {
-                        out.writeUTF("REGISTER_SUCCESS");
-                    } else {
-                        out.writeUTF("REGISTER_FAIL");
-                    }
-                    out.flush();
+                    sendMessage(out, isSuccess ? "REGISTER_SUCCESS" : "REGISTER_FAIL");
 
                 } else if ("UPDATE_PROFILE".equals(command)) {
+                    String[] parts = request.split(",");
                     int userId = Integer.parseInt(parts[1]);
                     String username = parts[2];
                     String email = parts[3];
 
                     boolean isSuccess = userService.updateProfile(userId, username, email);
-                    out.writeUTF(isSuccess ? "PROFILE_UPDATE_SUCCESS" : "PROFILE_UPDATE_FAIL");
-                    out.flush();
+                    sendMessage(out, isSuccess ? "PROFILE_UPDATE_SUCCESS" : "PROFILE_UPDATE_FAIL");
 
                 } else if ("CHANGE_PASSWORD".equals(command)) {
+                    String[] parts = request.split(",");
                     int userId = Integer.parseInt(parts[1]);
                     String currentPassword = parts[2];
                     String newPassword = parts[3];
 
                     boolean isSuccess = userService.changePassword(userId, currentPassword, newPassword);
-                    out.writeUTF(isSuccess ? "PASSWORD_CHANGE_SUCCESS" : "PASSWORD_CHANGE_FAIL");
-                    out.flush();
+                    sendMessage(out, isSuccess ? "PASSWORD_CHANGE_SUCCESS" : "PASSWORD_CHANGE_FAIL");
 
                 } else if ("GET_ACTIVE_AUCTIONS".equals(command)) {
                     List<Auction> activeAuctions = auctionService.getActiveAuctions();
-
                     StringBuilder responseBuilder = new StringBuilder("ACTIVE_AUCTIONS,");
 
                     for (int i = 0; i < activeAuctions.size(); i++) {
                         Auction auction = activeAuctions.get(i);
 
+                        String base64Img = "NO_IMAGE";
+                        String imgPath = auction.getItem().getImagePath();
+                        if (imgPath != null && !imgPath.isEmpty()) {
+                            File imgFile = new File(imgPath);
+                            if (imgFile.exists()) {
+                                try {
+                                    byte[] fileContent = java.nio.file.Files.readAllBytes(imgFile.toPath());
+                                    base64Img = java.util.Base64.getEncoder().encodeToString(fileContent);
+                                } catch (Exception e) {
+                                    System.err.println("[Server] Không thể chuyển đổi ảnh sang Base64: " + e.getMessage());
+                                }
+                            }
+                        }
+
                         responseBuilder.append(auction.getId()).append("|")
                                 .append(auction.getItem().getName()).append("|")
-                                .append(String.format(Locale.US, "%.2f", auction.getCurrentPrice()));
+                                .append(String.format(Locale.US, "%.2f", auction.getCurrentPrice())).append("|")
+                                .append(base64Img);
 
                         if (i < activeAuctions.size() - 1) {
                             responseBuilder.append(";");
                         }
                     }
-                    out.writeUTF(responseBuilder.toString());
-                    out.flush();
+                    sendMessage(out, responseBuilder.toString());
 
                 } else if ("GET_ENDED_AUCTIONS".equals(command)) {
                     List<Auction> ended = auctionService.getEndedAuctions();
@@ -155,62 +174,48 @@ public class ClientHandler implements Runnable {
                                 .append(a.getStatus().toString());
                         if (i < ended.size() - 1) sb.append(";");
                     }
-                    out.writeUTF(sb.toString());
-                    out.flush();
+                    sendMessage(out, sb.toString());
 
                 } else if ("CREATE_AUCTION".equals(command)) {
+                    String[] parts = request.split(",", 5);
+
                     String itemName = parts[1];
                     double startPrice = Double.parseDouble(parts[2]);
                     int sellerId = Integer.parseInt(parts[3]);
+                    String base64Image = parts[4];
 
-                    System.out.println("[Server] Nhận yêu cầu tạo auction: " + itemName);
+                    System.out.println("[Server] Đang tiến hành giải mã dữ liệu ảnh của vật phẩm: " + itemName);
 
-                    // Bước 2: Đọc ảnh từ socket
                     String imagePath = null;
-                    int imageSize = in.readInt();  // Đọc độ dài ảnh
-
-                    if (imageSize > 0) {
-                        byte[] imageBytes = new byte[imageSize];
-                        in.readFully(imageBytes);  // Đọc toàn bộ bytes
-
-                        // Lưu ảnh
-                        imagePath = saveImageBytes(imageBytes, itemName);
-                        System.out.println("[Server] Đã nhận ảnh: " + imageSize + " bytes");
+                    if (!"NO_IMAGE".equals(base64Image)) {
+                        imagePath = saveImageToFile(base64Image, itemName);
                     }
 
-                    // Tạo Item, default id là 0
                     Item item = new Item(0, itemName) {};
                     item.setImagePath(imagePath);
 
                     Auction newAuction = new Auction(item, startPrice);
                     newAuction.setStatus(AuctionStatus.ONQUEUE);
                     newAuction.setSellerId(sellerId);
-
+                    newAuction.setStartTime(LocalDateTime.now());
+                    newAuction.setEndTime(LocalDateTime.now().plusDays(7));
 
                     ItemRepository itemRepo = new ItemRepository();
+                    AuctionRepository auctionRepo = new AuctionRepository();
+
                     boolean isItemSaved = itemRepo.addItemToRepo(item);
 
                     if (isItemSaved) {
-                        System.out.println("[Server] Sản phẩm lưu thành công, nhận ID từ DB: " + newAuction.getItem().getId());
-                        auctionService.addAuction(newAuction);
+                        boolean isAuctionSaved = auctionRepo.addAuctionToRepo(newAuction);
+                        sendMessage(out, isAuctionSaved ? "CREATE_AUCTION_SUCCESS" : "CREATE_AUCTION_FAIL");
                     } else {
-                        System.out.println("[Server] Lỗi lưu sản phẩm vào bảng items, chặn đứng luồng tạo phòng.");
+                        sendMessage(out, "CREATE_AUCTION_FAIL");
                     }
-
-                    out.writeUTF("CREATE_AUCTION_SUCCESS");
-                    out.flush();
 
                 } else if ("GET_PENDING_AUCTIONS".equals(command)) {
-                    System.out.println("[Server] ===== DEBUG GET_PENDING_AUCTIONS =====");
-
                     List<Auction> pending = auctionService.getPendingAuctions();
-
-                    System.out.println("[Server] Số lượng pending: " + pending.size());
-                    for (Auction a : pending) {
-                        System.out.println("[Server] Pending: ID=" + a.getId() + " Name=" + a.getItem().getName());
-                    }
-
                     StringBuilder sb = new StringBuilder("PENDING_AUCTIONS,");
+
                     for (int i = 0; i < pending.size(); i++) {
                         Auction a = pending.get(i);
                         sb.append(a.getId()).append("|")
@@ -219,12 +224,10 @@ public class ClientHandler implements Runnable {
                                 .append(a.getSellerId());
                         if (i < pending.size() - 1) sb.append(";");
                     }
-
-                    System.out.println("[Server] Gửi response: " + sb.toString());
-                    out.writeUTF(sb.toString());
-                    out.flush();
+                    sendMessage(out, sb.toString());
 
                 } else if ("GET_MY_AUCTIONS".equals(command)) {
+                    String[] parts = request.split(",");
                     int sellerId = Integer.parseInt(parts[1]);
                     List<Auction> myAuctions = auctionService.getAuctionsBySellerId(sellerId);
 
@@ -237,29 +240,22 @@ public class ClientHandler implements Runnable {
                                 .append(a.getStatus().toString());
                         if (i < myAuctions.size() - 1) sb.append(";");
                     }
-                    out.writeUTF(sb.toString());
-                    out.flush();
+                    sendMessage(out, sb.toString());
 
                 } else if ("APPROVE_AUCTION".equals(command)) {
-                    int auctionId = Integer.parseInt(parts[1]);
-                    System.out.println("[Server] Admin duyệt auction ID: " + auctionId);
-
+                    String[] parts = request.split(",");
+                    long auctionId = Long.parseLong(parts[1]);
                     boolean ok = auctionService.approveAuction(auctionId);
-                    out.writeUTF(ok ? "APPROVE_AUCTION_SUCCESS" : "APPROVE_AUCTION_FAIL");  // ← SỬA
-                    out.flush();
-                    System.out.println("[Server] Kết quả duyệt: " + ok);
+                    sendMessage(out, ok ? "APPROVE_AUCTION_SUCCESS" : "APPROVE_AUCTION_FAIL");
 
-                } else if ("CANCEL_AUCTION".equals(command)) {   // ← PHẢI CÓ ELSE IF
-                    int auctionId = Integer.parseInt(parts[1]);
-                    System.out.println("[Server] ===== NHẬN CANCEL_AUCTION: " + auctionId + " =====");
+                } else if ("CANCEL_AUCTION".equals(command)) {
+                    String[] parts = request.split(",");
+                    long auctionId = Long.parseLong(parts[1]);
                     boolean ok = auctionService.cancelAuction(auctionId);
-                    System.out.println("[Server] Kết quả hủy: " + ok);
-                    out.writeUTF(ok ? "CANCEL_AUCTION_SUCCESS" : "CANCEL_AUCTION_FAIL");
-                    out.flush();
+                    sendMessage(out, ok ? "CANCEL_AUCTION_SUCCESS" : "CANCEL_AUCTION_FAIL");
 
                 } else if ("LOGOUT".equals(command)) {
-                    out.writeUTF("GOODBYE");
-                    out.flush();
+                    sendMessage(out, "GOODBYE");
                     isRunning = false;
                 }
             }
@@ -268,48 +264,25 @@ public class ClientHandler implements Runnable {
             clientSocket.close();
 
         } catch (Exception e) {
-            System.out.println("[Server] Client connection ended or failed.");
-            e.printStackTrace();
+            System.out.println("[Server] Thao tác kết thúc luồng hoặc Client đã ngắt kết nối đột ngột.");
         }
     }
+
     private String saveImageToFile(String base64, String itemName) {
         try {
-            // Tạo thư mục nếu chưa có
             File dir = new File("auction_images");
             if (!dir.exists()) dir.mkdir();
 
-            // Tên file: itemName_timestamp.jpg
             String fileName = itemName.replaceAll("[^a-zA-Z0-9]", "_") + "_" + System.currentTimeMillis() + ".jpg";
             File imageFile = new File(dir, fileName);
 
-            // Giải mã Base64 và ghi ra file
             byte[] imageBytes = java.util.Base64.getDecoder().decode(base64);
             java.nio.file.Files.write(imageFile.toPath(), imageBytes);
 
             return imageFile.getPath();
         } catch (Exception e) {
-            e.printStackTrace();
+            System.err.println("[Server] Lỗi giải mã và lưu tập tin ảnh: " + e.getMessage());
             return null;
         }
     }
-    private String saveImageBytes(byte[] imageBytes, String itemName) {
-        try {
-            java.io.File dir = new java.io.File("auction_images");
-            if (!dir.exists()) dir.mkdir();
-
-            String safeName = itemName.replaceAll("[^a-zA-Z0-9]", "_");
-            String fileName = safeName + "_" + System.currentTimeMillis() + ".jpg";
-            java.io.File imageFile = new java.io.File(dir, fileName);
-
-            java.nio.file.Files.write(imageFile.toPath(), imageBytes);
-
-            System.out.println("[Server] Đã lưu ảnh: " + imageFile.getPath());
-            return imageFile.getPath();
-
-        } catch (Exception e) {
-            System.err.println("[Server] Lỗi lưu ảnh: " + e.getMessage());
-            return null;
-        }
-    }
-
 }

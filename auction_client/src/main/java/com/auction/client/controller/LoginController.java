@@ -18,18 +18,16 @@ public class LoginController implements Initializable {
     @FXML private TextField usernameField;
     @FXML private PasswordField passwordField;
     @FXML private Label messageLabel;
-
-    @FXML private RadioButton bidderRadio;
-    @FXML private RadioButton sellerRadio;
-    @FXML private RadioButton adminRadio;
-    @FXML private ToggleGroup roleGroup;
+    @FXML private Button loginButton;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         NetworkClientService.getInstance().setOnLoginSuccess(loggedInUser -> {
             javafx.application.Platform.runLater(() -> {
                 try {
-                    showMessage("Login success!", "green");
+                    messageLabel.setVisible(true);
+                    messageLabel.setText("Đăng nhập thành công!");
+                    messageLabel.setStyle("-fx-text-fill: green;");
 
                     UserSession.setUser(loggedInUser);
 
@@ -49,16 +47,15 @@ public class LoginController implements Initializable {
 
         NetworkClientService.getInstance().setOnLoginFail(errorMessage -> {
             javafx.application.Platform.runLater(() -> {
-                showMessage(errorMessage, "red");
+                messageLabel.setVisible(true);
+                messageLabel.setText(errorMessage);
+                messageLabel.setStyle("-fx-text-fill: red;");
+
+                if (loginButton != null) {
+                    loginButton.setDisable(false);
+                }
             });
         });
-    }
-
-    private void showMessage(String message, String color) {
-        messageLabel.setVisible(true);
-        messageLabel.setManaged(true);
-        messageLabel.setText(message);
-        messageLabel.setStyle("-fx-text-fill: " + color + ";");
     }
 
     @FXML
@@ -67,16 +64,19 @@ public class LoginController implements Initializable {
         String pass = passwordField.getText();
 
         if (user.isEmpty() || pass.isEmpty()) {
-            showMessage("You have not entered your account or password.", "red");
+            messageLabel.setVisible(true);
+            messageLabel.setText("Bạn chưa nhập tài khoản hoặc mật khẩu của mình.");
+            messageLabel.setStyle("-fx-text-fill: red;");
             return;
         }
 
-        if (!NetworkClientService.getInstance().isConnected()) {
-            showMessage("Cannot connect to server. Start the server first.", "red");
-            return;
-        }
+        messageLabel.setVisible(true);
+        messageLabel.setText("Đang đăng nhập ...");
+        messageLabel.setStyle("-fx-text-fill: black;");
 
-        showMessage("Logging in...", "black");
+        if (loginButton != null) {
+            loginButton.setDisable(true);
+        }
 
         NetworkClientService.getInstance().login(user, pass);
     }
@@ -105,7 +105,7 @@ public class LoginController implements Initializable {
 
             Stage stage = (Stage) usernameField.getScene().getWindow();
             stage.setScene(new Scene(root));
-            stage.setTitle("Register");
+            stage.setTitle("Đăng kí");
             stage.show();
 
         } catch (Exception e) {

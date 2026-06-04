@@ -8,6 +8,7 @@ public class Bid {
     private LocalDateTime time;
 
     public Bid() {
+        this.time = LocalDateTime.now();
     }
 
     public Bid(Bidder bidder, double amount) {
@@ -16,16 +17,37 @@ public class Bid {
         this.time = LocalDateTime.now();
     }
 
+    public Bid(Bidder bidder, double amount, LocalDateTime time) {
+        this.bidder = bidder;
+        this.amount = amount;
+        this.time = time;
+    }
+
     public double getAmount() {
         return amount;
     }
-    public void setAmount(double amount) { this.amount = amount; }
+
+    public void setAmount(double amount) {
+        this.amount = amount;
+    }
 
     public Bidder getBidder() {
         return bidder;
     }
-    public void setBidder(Bidder b) { this.bidder = b; }
 
-    public LocalDateTime getBidTime() { return time; }
-    public void setBidTime(LocalDateTime time) { this.time = time; }
+    public void setBidder(Bidder bidder) {
+        this.bidder = bidder;
+    }
+
+    public LocalDateTime getTime() {
+        return time;
+    }
+
+    public void setTime(LocalDateTime time) {
+        this.time = time;
+    }
+
+    public String getUsername() {
+        return (bidder != null) ? bidder.getName() : "Ẩn danh";
+    }
 }

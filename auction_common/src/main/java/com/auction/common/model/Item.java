@@ -1,35 +1,37 @@
 package com.auction.common.model;
 
-import java.util.List;
-import java.util.ArrayList;
+public class Item extends Entity<Integer> {
 
-public class Item {
-    protected int id;
-    protected String name;
-    protected List<Bid> bidHistory;
+    private String name;
+    private String imagePath;
 
-    public Item(int id, String name) {
-        this.id = id;
+    public Item() {
+        super();
+    }
+
+    public Item(Integer id, String name) {
+        super(id);
         this.name = name;
-        this.bidHistory = new ArrayList<>();
     }
-    public int getId() {
-        return this.id;
-    }
-    public void setId(int id) {
-        this.id = id;
+
+    public Item(Integer id, String name, String imagePath) {
+        super(id);
+        this.name = name;
+        this.imagePath = imagePath;
     }
 
     public String getName() {
         return this.name;
     }
-    public void addBid(Bid newBid) {
-        this.bidHistory.add(newBid);
+
+    public void setName(String name) {
+        this.name = name;
     }
-    protected String imagePath;
+
     public String getImagePath() {
         return imagePath;
     }
+
     public void setImagePath(String imagePath) {
         this.imagePath = imagePath;
     }

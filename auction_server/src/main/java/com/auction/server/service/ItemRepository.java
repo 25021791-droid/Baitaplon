@@ -5,7 +5,6 @@ import java.sql.*;
 
 public class ItemRepository {
 
-    // -- Gán các thuộc tính từ object Java sang câu lệnh SQL để lưu vào bảng items
     public boolean addItemToRepo(Item item) {
         String sql = "INSERT INTO items (name, image_path) VALUES (?, ?)";
 
@@ -17,7 +16,6 @@ public class ItemRepository {
 
             int affectedRows = stmt.executeUpdate();
 
-            // -- Lấy ID từ DB gán ngược lại cho object
             if (affectedRows > 0) {
                 try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
                     if (generatedKeys.next()) {
@@ -32,7 +30,6 @@ public class ItemRepository {
         return false;
     }
 
-    // -- Lấy item từ DB theo id
     public Item getItemFromRepo(int itemId) {
         String sql = "SELECT * FROM items WHERE id = ?";
 

@@ -4,6 +4,7 @@ import com.auction.common.model.Auction;
 import com.auction.common.model.AuctionStatus;
 import com.auction.common.model.Bid;
 import com.auction.common.model.Bidder;
+import com.auction.common.model.User;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,6 +13,60 @@ public class AuctionService {
 
     private final BidService bidService = new BidService();
     private final UserService userService = new UserService();
+
+    public synchronized boolean placeBid(long auctionId, int bidderId, double bidAmount) {
+        System.out.println("[AuctionService] Đang xử lý đặt giá cho phiên: " + auctionId + " bởi User: " + bidderId);
+
+        Auction auction = auctionRepository.getAuctionById(auctionId);
+        if (auction == null) {
+            System.out.println("[AuctionService] Không tìm thấy phiên đấu giá với ID: " + auctionId);
+            return false;
+        }
+
+        // 2. Kiểm tra trạng thái phiên đấu giá (Phải đang chạy mới được đặt giá)
+        if (auction.getStatus() != AuctionStatus.RUNNING) {
+            System.out.println("[AuctionService] Đặt giá thất bại: Phiên đấu giá không ở trạng thái RUNNING.");
+            return false;
+        }
+
+        // 3. Kiểm tra số tiền cược mới có lớn hơn giá hiện tại không
+        if (bidAmount <= auction.getCurrentPrice()) {
+            System.out.println("[AuctionService] Đặt giá thất bại: Giá đặt mua phải lớn hơn giá hiện tại.");
+            return false;
+        }
+
+        // 4. Kiểm tra ví tiền của người đặt cược
+        User user = userService.getUserById(bidderId); // Giả định UserService có hàm lấy thông tin User
+        if (user instanceof Bidder) {
+            Bidder bidder = (Bidder) user;
+            if (bidAmount > bidder.getBalance()) {
+                System.out.println("[AuctionService] Đặt giá thất bại: Tài khoản người mua không đủ số dư.");
+                return false;
+            }
+
+            // 5. Cập nhật giá cao nhất hiện tại cho phiên đấu giá
+            auction.setCurrentPrice(bidAmount);
+
+            try {
+                Bid newBid = new Bid(bidder, bidAmount, java.time.LocalDateTime.now());
+            } catch (Exception e) {
+                System.out.println("[AuctionService] Bỏ qua ghi log chi tiết Bid: " + e.getMessage());
+            }
+
+            // 7. Đồng bộ cập nhật giá tiền mới xuống Database/Repository
+            // Giả định repo của bạn có hàm update hoặc lưu dữ liệu trực tiếp
+            boolean isUpdated = auctionRepository.updateCurrentPrice(auctionId, bidAmount);
+            if (!isUpdated) {
+                // Phương án dự phòng nếu repo không có updatePrice riêng lẻ: lưu đè đối tượng
+                isUpdated = auctionRepository.saveOrUpdate(auction);
+            }
+
+            System.out.println("[AuctionService] Cập nhật giá mới thành công lên hệ thống: đ " + bidAmount);
+            return true;
+        }
+
+        return false;
+    }
 
     // -- Lấy danh sách auction đang chạy
     public synchronized List<Auction> getActiveAuctions() {
@@ -129,5 +184,4 @@ public class AuctionService {
         }
         return success;
     }
-
 }

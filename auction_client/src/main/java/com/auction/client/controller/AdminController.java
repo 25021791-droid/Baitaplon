@@ -3,7 +3,10 @@ package com.auction.client.controller;
 import com.auction.client.service.NetworkClientService;
 import com.auction.common.model.Auction;
 import com.auction.common.model.User;
+import com.auction.client.utils.UserSession;
 import javafx.application.Platform;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -11,23 +14,23 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 import java.net.URL;
-import java.util.ResourceBundle;import javafx.scene.control.TableColumn;
-import javafx.beans.property.SimpleStringProperty;
+import java.util.List;
+import java.util.ResourceBundle;
 
 public class AdminController implements Initializable {
 
-    // Bảng quản lý toàn bộ User trong hệ thống
     @FXML private TableView<User> tableUsers;
-
-    // Bảng quản lý toàn bộ Phiên đấu giá
     @FXML private TableView<Auction> tableAllAuctions;
+    @FXML private TableView<Auction> tablePendingAuctions;
 
     @FXML private Button btnCancelAuction;
+    @FXML private Button btnApprove;
     @FXML private Button btnRefresh;
 
     private NetworkClientService networkService;
@@ -35,138 +38,101 @@ public class AdminController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         this.networkService = NetworkClientService.getInstance();
-        // ========== SETUP CỘT CHO BẢNG CHỜ DUYỆT ==========
+
+        // Khởi tạo cấu trúc các cột cho bảng hiển thị dữ liệu
         setupPendingAuctionsTable();
         setupAllAuctionsTable();
-        // ========== NÚT LÀM MỚI ==========
-        btnRefresh.setOnAction(event -> {
-            loadSystemData();
-            networkService.requestPendingAuctions(); // Load cả danh sách chờ duyệt
-        });
-        networkService.setOnPendingAuctionsReceived(auctions -> {
-            System.out.println("[AdminController] ===== CALLBACK NHẬN DỮ LIỆU =====");
-            System.out.println("[AdminController] Số auction: " + auctions.size());
-            for (Auction a : auctions) {
-                System.out.println("[AdminController] Auction: ID=" + a.getId() + " Name=" + a.getItem().getName());
-            }
 
-            Platform.runLater(() -> {
-                System.out.println("[AdminController] Đang update TableView...");
-                tablePendingAuctions.getItems().clear();
-                tablePendingAuctions.getItems().addAll(auctions);
-                System.out.println("[AdminController] TableView có " + tablePendingAuctions.getItems().size() + " items");
-            });
-        });
+        // Cấu hình tương tác cho nút bấm Refresh (Làm mới)
+        btnRefresh.setOnAction(event -> loadSystemData());
 
-        networkService.setOnPendingAuctionsReceived(auctions -> {
-            System.out.println("[Admin Client] Nhận được " + auctions.size() + " auction pending");
-            Platform.runLater(() -> {
-                tablePendingAuctions.getItems().clear();
-                tablePendingAuctions.getItems().addAll(auctions);
-                System.out.println("[Admin Client] Đã cập nhật TableView");
-            });
-        });
-        // ========== NÚT HỦY AUCTION ==========
-        btnCancelAuction.setOnAction(event -> handleCancelSelectedAuction());
-
-        // ========== NÚT DUYỆT AUCTION ==========
-        btnApprove.setOnAction(event -> handleApprove());
+        // ========== CALLBACK: Nhận danh sách các phiên đấu giá đang kích hoạt (Active) ==========
         networkService.setOnActiveAuctionsReceived(auctions -> {
             Platform.runLater(() -> {
                 tableAllAuctions.getItems().clear();
                 tableAllAuctions.getItems().addAll(auctions);
-                System.out.println("[Admin] Đã load " + auctions.size() + " auction vào bảng quản lý");
+                System.out.println("[Admin] Đã tải " + auctions.size() + " phiên đấu giá vào bảng quản lý chung.");
             });
         });
-        // ========== CALLBACK: Nhận danh sách auction chờ duyệt ==========
+
+        // ========== 🔥 ĐÃ GOM LẠI: Callback nhận danh sách chờ duyệt duy nhất (Tránh ghi đè lỗi) ==========
         networkService.setOnPendingAuctionsReceived(auctions -> {
+            System.out.println("[Admin Client] Tiếp nhận danh sách chờ duyệt thành công. Số lượng: " + auctions.size());
             Platform.runLater(() -> {
                 tablePendingAuctions.getItems().clear();
                 tablePendingAuctions.getItems().addAll(auctions);
-                System.out.println("[Admin] Đã load " + auctions.size() + " auction chờ duyệt");
+                System.out.println("[Admin Client] Đã cập nhật dữ liệu lên TableView chờ duyệt thành công.");
             });
         });
 
-        // ========== CALLBACK: Kết quả duyệt auction ==========
+        // ========== CALLBACK: Kết quả phê duyệt phiên đấu giá (Approve) ==========
         networkService.setOnApproveAuctionResult(success -> {
             Platform.runLater(() -> {
                 if (success) {
-                    showAlert("Thành công", "Đã duyệt phiên đấu giá!");
-                    networkService.requestPendingAuctions(); // Refresh danh sách
+                    showAlert("Thành công", "Đã duyệt và kích hoạt phiên đấu giá này lên hệ thống công khai!");
+                    networkService.requestPendingAuctions(); // Refresh danh sách chờ duyệt ngay lập tức
+                    networkService.requestActiveAuctions();  // Đồng bộ lại bảng quản lý chung
                 } else {
-                    showAlert("Lỗi", "Không thể duyệt phiên đấu giá!");
+                    showAlert("Lỗi", "Quá trình phê duyệt gặp sự cố. Vui lòng kiểm tra lại trạng thái DB!");
                 }
             });
         });
+
+        // ========== CALLBACK: Kết quả xử lý yêu cầu hủy phiên đấu giá (Cancel) ==========
         networkService.setOnCancelAuctionResult(success -> {
             Platform.runLater(() -> {
                 if (success) {
-                    showAlert("Thành công", "Đã hủy phiên đấu giá!");
+                    showAlert("Thành công", "Hệ thống đã thu hồi và hủy bỏ phiên đấu giá được chọn.");
                 } else {
-                    showAlert("Lỗi", "Không thể hủy phiên đấu giá!");
+                    showAlert("Lỗi", "Không thể thực hiện lệnh hủy phiên đấu giá này!");
                 }
-                // Luôn refresh dù thành công hay thất bại
-                networkService.requestActiveAuctions();
-                networkService.requestPendingAuctions();
+                // Đồng bộ cập nhật giao diện tổng thể sau khi có phản hồi chính thức từ Server
+                loadSystemData();
             });
         });
 
+        // Đăng ký sự kiện click trực tiếp cho các nút bấm tác vụ
+        btnCancelAuction.setOnAction(event -> handleCancelSelectedAuction());
+        btnApprove.setOnAction(event -> handleApprove());
+
+        // Kích hoạt nạp dữ liệu hệ thống tự động ngay khi vừa mở màn hình Admin lên
         loadSystemData();
-        networkService.requestPendingAuctions();
-        networkService.requestActiveAuctions();
     }
+
     private void setupPendingAuctionsTable() {
         tablePendingAuctions.getColumns().clear();
-        javafx.scene.control.TableColumn<Auction, String> colId = new javafx.scene.control.TableColumn<>("ID");
+
+        TableColumn<Auction, String> colId = new TableColumn<>("ID");
         colId.setCellValueFactory(cellData -> {
-            int id = cellData.getValue().getId();
-            return new javafx.beans.property.SimpleStringProperty(String.valueOf(id));
+            Long id = cellData.getValue().getId();
+            return new SimpleStringProperty(id != null ? id.toString() : "N/A");
         });
         colId.setPrefWidth(75);
-        javafx.scene.control.TableColumn<Auction, String> colName = new javafx.scene.control.TableColumn<>("Tên Sản Phẩm");
+
+        TableColumn<Auction, String> colName = new TableColumn<>("Tên Sản Phẩm");
         colName.setCellValueFactory(cellData -> {
             String name = cellData.getValue().getItem().getName();
-            return new javafx.beans.property.SimpleStringProperty(name != null ? name : "N/A");
+            return new SimpleStringProperty(name != null ? name : "N/A");
         });
         colName.setPrefWidth(250);
-        javafx.scene.control.TableColumn<Auction, String> colPrice = new javafx.scene.control.TableColumn<>("Giá Khởi Điểm");
+
+        TableColumn<Auction, String> colPrice = new TableColumn<>("Giá Khởi Điểm");
         colPrice.setCellValueFactory(cellData -> {
             double price = cellData.getValue().getCurrentPrice();
-            return new javafx.beans.property.SimpleStringProperty(String.format("%.2f", price));
+            return new SimpleStringProperty(String.format("%.2f", price));
         });
         colPrice.setPrefWidth(150);
-        javafx.scene.control.TableColumn<Auction, String> colStatus = new javafx.scene.control.TableColumn<>("Trạng Thái");
+
+        TableColumn<Auction, String> colStatus = new TableColumn<>("Trạng Thái");
         colStatus.setCellValueFactory(cellData -> {
-            String status = cellData.getValue().getStatus() != null ?
-                    cellData.getValue().getStatus().toString() : "N/A";
-            return new javafx.beans.property.SimpleStringProperty(status);
+            String status = cellData.getValue().getStatus() != null ? cellData.getValue().getStatus().toString() : "N/A";
+            return new SimpleStringProperty(status);
         });
         colStatus.setPrefWidth(150);
+
         tablePendingAuctions.getColumns().addAll(colId, colName, colPrice, colStatus);
     }
-    private void loadSystemData() {
-        System.out.println("Admin đang yêu cầu tải dữ liệu hệ thống...");
-        networkService.requestActiveAuctions();
-        networkService.requestPendingAuctions();
-    }
-    private void handleCancelSelectedAuction() {
-        Auction selectedAuction = tableAllAuctions.getSelectionModel().getSelectedItem();
 
-        if (selectedAuction == null) {
-            showAlert("Thông báo", "Vui lòng chọn một phiên đấu giá trên bảng để hủy!");
-            return;
-        }
-
-        System.out.println("Admin yêu cầu hủy phiên: " + selectedAuction.getId());
-        networkService.cancelAuction(selectedAuction.getId());
-
-        // ========== REFRESH NGAY LẬP TỨC ==========
-        // Không chờ callback, refresh cả 2 bảng
-        networkService.requestActiveAuctions();
-        networkService.requestPendingAuctions();
-
-        showAlert("Đã gửi", "Đã gửi yêu cầu hủy và làm mới danh sách!");
-    }
     private void setupAllAuctionsTable() {
         tableAllAuctions.getColumns().clear();
 
@@ -184,7 +150,6 @@ public class AdminController implements Initializable {
 
         TableColumn<Auction, String> colBidder = new TableColumn<>("Người Giữ Giá");
         colBidder.setCellValueFactory(cell -> {
-            // Kiểm tra nếu có bid thì lấy tên bidder
             if (cell.getValue().getBids() != null && !cell.getValue().getBids().isEmpty()) {
                 int lastIndex = cell.getValue().getBids().size() - 1;
                 return new SimpleStringProperty(cell.getValue().getBids().get(lastIndex).getBidder().getName());
@@ -199,6 +164,37 @@ public class AdminController implements Initializable {
 
         tableAllAuctions.getColumns().addAll(colId, colName, colPrice, colBidder, colStatus);
     }
+
+    private void loadSystemData() {
+        System.out.println("Admin đang phát tín hiệu yêu cầu đồng bộ toàn bộ dữ liệu từ Server...");
+        networkService.requestActiveAuctions();
+        networkService.requestPendingAuctions();
+    }
+
+    private void handleCancelSelectedAuction() {
+        Auction selectedAuction = tableAllAuctions.getSelectionModel().getSelectedItem();
+
+        if (selectedAuction == null) {
+            showAlert("Thông báo", "Vui lòng chọn một phiên đấu giá trên bảng để tiến hành hủy bỏ!");
+            return;
+        }
+
+        System.out.println("Admin yêu cầu hủy phiên: " + selectedAuction.getId());
+        networkService.cancelAuction(selectedAuction.getId());
+        showAlert("Đã gửi lệnh", "Yêu cầu hủy phiên số " + selectedAuction.getId() + " đã được đẩy lên hàng đợi của Server.");
+    }
+
+    @FXML
+    private void handleApprove() {
+        Auction selected = tablePendingAuctions.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            showAlert("Thông báo", "Vui lòng click chọn một phiên đấu giá trên bảng chờ duyệt trước!");
+            return;
+        }
+        System.out.println("[Admin] Gửi lệnh duyệt phiên đấu giá có ID: " + selected.getId());
+        networkService.approveAuction(selected.getId());
+    }
+
     @FXML
     private void handleProfile() {
         try {
@@ -207,31 +203,22 @@ public class AdminController implements Initializable {
             Stage dialog = new Stage();
             dialog.initOwner(btnRefresh.getScene().getWindow());
             dialog.initModality(Modality.WINDOW_MODAL);
-            dialog.setTitle("Profile");
+            dialog.setTitle("Hồ sơ hệ thống - Admin");
             dialog.setScene(new Scene(root));
             dialog.showAndWait();
         } catch (Exception e) {
             e.printStackTrace();
-            showAlert("Error", "Cannot open profile screen.");
+            showAlert("Error", "Không thể khởi tạo hoặc nạp giao diện Profile.");
         }
     }
 
-    private void showAlert(String title, String content) {
-        Platform.runLater(() -> {
-            Alert alert = new Alert(Alert.AlertType.WARNING);
-            alert.setTitle(title);
-            alert.setHeaderText(null);
-            alert.setContentText(content);
-            alert.showAndWait();
-        });
-    }
     @FXML
     private void handleLogout() {
-        com.auction.client.utils.UserSession.cleanUserSession();
+        UserSession.cleanUserSession();
 
-        // Đóng tất cả cửa sổ hiện tại
-        javafx.stage.Stage stage = (javafx.stage.Stage) javafx.stage.Stage.getWindows().stream()
-                .filter(window -> window.isShowing())
+        // Thu dọn đóng tất cả cửa sổ đang bật của tài khoản Admin hiện tại
+        Stage stage = (Stage) Stage.getWindows().stream()
+                .filter(Window -> Window.isShowing())
                 .findFirst()
                 .orElse(null);
 
@@ -239,31 +226,28 @@ public class AdminController implements Initializable {
             stage.close();
         }
 
-        // Mở lại Login
+        // Điều hướng mượt mà người dùng quay trở lại màn hình Đăng Nhập chính thức
         Platform.runLater(() -> {
             try {
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/auction/Login.fxml"));
                 Parent root = loader.load();
                 Stage loginStage = new Stage();
-                loginStage.setTitle("Đăng Nhập");
+                loginStage.setTitle("Hệ Thống Đấu Giá - Đăng Nhập");
                 loginStage.setScene(new Scene(root));
                 loginStage.show();
             } catch (Exception e) {
-                e.printStackTrace();
+                System.err.println("[Lỗi] Không thể quay về màn hình Login: " + e.getMessage());
             }
         });
     }
-    @FXML private TableView<Auction> tablePendingAuctions;
-    @FXML private Button btnApprove;
 
-    @FXML
-    private void handleApprove() {
-        Auction selected = tablePendingAuctions.getSelectionModel().getSelectedItem();
-        if (selected == null) {
-            showAlert("Thông báo", "Vui lòng chọn một phiên đấu giá để duyệt!");
-            return;
-        }
-        System.out.println("[Admin] Duyệt auction ID: " + selected.getId());
-        networkService.approveAuction(selected.getId());
+    private void showAlert(String title, String content) {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION); // Đổi sang INFORMATION nhìn trực quan hơn WARNING
+            alert.setTitle(title);
+            alert.setHeaderText(null);
+            alert.setContentText(content);
+            alert.showAndWait();
+        });
     }
 }
