@@ -82,6 +82,7 @@ public class BidderController implements Initializable {
                     bidHistoryList.add(0, selfBid); 
 
                     bidField.clear();
+                    setupUser(); 
                     
                     networkService.requestActiveAuctions();
                 } else {
@@ -133,8 +134,8 @@ public class BidderController implements Initializable {
             if (currentAuction != null) {
                 for (Auction a : auctionList) {
                     if (a.getId() == currentAuction.getId()) {
-                        this.currentAuction = a;
-                        lblCurrentPrice.setText("Giá hiện tại: $" + a.getCurrentPrice());
+                        // Cập nhật lại chi tiết đấu giá (giá, lịch sử, thời gian) khi danh sách được refresh
+                        updateAuctionDetails(a);
                         break;
                     }
                 }
@@ -176,7 +177,7 @@ public class BidderController implements Initializable {
         lblCurrentPrice.setText("Giá hiện tại: $" + auction.getCurrentPrice());
         lblItemDescription.setText("Mô tả: " + auction.getItem().getName() + "\nTình trạng: Hoạt động tốt.");
 
-        
+        // Nạp ảnh Base64
         String base64Image = auction.getItem().getImagePath();
         if (base64Image != null && !base64Image.isEmpty() && !"NO_IMAGE".equals(base64Image)) {
             try {
@@ -191,8 +192,28 @@ public class BidderController implements Initializable {
             loadDefaultImage();
         }
 
-        this.secondsRemaining = 300; 
-        setupTimer();
+        // Đồng bộ lịch sử cược lên bảng TableView
+        bidHistoryList.clear();
+        if (auction.getBids() != null) {
+            for (int i = auction.getBids().size() - 1; i >= 0; i--) {
+                bidHistoryList.add(auction.getBids().get(i));
+            }
+        }
+
+        // Chỉ tính và thiết lập thời gian đếm ngược khi chưa có timer hoặc timer không đang chạy
+        if (timeline == null || timeline.getStatus() != javafx.animation.Animation.Status.RUNNING) {
+            if (auction.getEndTime() != null) {
+                java.time.Duration duration = java.time.Duration.between(java.time.LocalDateTime.now(), auction.getEndTime());
+                this.secondsRemaining = (int) duration.toSeconds();
+                if (this.secondsRemaining < 0) this.secondsRemaining = 0;
+            } else {
+                this.secondsRemaining = 300;
+            }
+            setupTimer();
+        } else {
+            // Cập nhật nhãn thời gian mà không thay đổi secondsRemaining
+            lblTimeLeft.setText(formatTime(secondsRemaining));
+        }
         if(bidField.isDisable()) {
             bidField.setDisable(false);
         }
@@ -218,6 +239,19 @@ public class BidderController implements Initializable {
         bidTable.setItems(bidHistoryList);
     }
 
+    private String formatTime(int totalSeconds) {
+        if (totalSeconds <= 0) return "Thời gian còn lại: 00:00:00";
+        int days = totalSeconds / 86400;
+        int hours = (totalSeconds % 86400) / 3600;
+        int minutes = (totalSeconds % 3600) / 60;
+        int seconds = totalSeconds % 60;
+        if (days > 0) {
+            return String.format("Thời gian còn lại: %d ngày %02d:%02d:%02d", days, hours, minutes, seconds);
+        } else {
+            return String.format("Thời gian còn lại: %02d:%02d:%02d", hours, minutes, seconds);
+        }
+    }
+
     private void setupTimer() {
         if (timeline != null) {
             timeline.stop();
@@ -229,9 +263,7 @@ public class BidderController implements Initializable {
                 timeline.stop();
                 bidField.setDisable(true);
             } else {
-                int minutes = secondsRemaining / 60;
-                int seconds = secondsRemaining % 60;
-                lblTimeLeft.setText(String.format("Thời gian còn lại: %02d:%02d", minutes, seconds));
+                lblTimeLeft.setText(formatTime(secondsRemaining));
             }
         }));
         timeline.setCycleCount(Timeline.INDEFINITE);

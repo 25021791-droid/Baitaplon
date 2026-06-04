@@ -203,10 +203,75 @@ public class AuctionRepository {
     }
 
     public List<Bid> getBidsByAuctionId(int auctionId) {
-        return new ArrayList<>();
+        List<Bid> list = new ArrayList<>();
+        String sql = "SELECT b.*, u.username, u.email, u.balance FROM bids b " +
+                     "INNER JOIN users u ON b.bidder_id = u.id " +
+                     "WHERE b.auction_id = ? ORDER BY b.amount ASC";
+        try (Connection conn = DatabaseService.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, auctionId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    int bidderId = rs.getInt("bidder_id");
+                    String username = rs.getString("username");
+                    String email = rs.getString("email");
+                    double balance = rs.getDouble("balance");
+                    Bidder bidder = new Bidder(bidderId, username, email, balance);
+                    double amount = rs.getDouble("amount");
+                    java.time.LocalDateTime bidTime = rs.getTimestamp("bid_time").toLocalDateTime();
+                    Bid bid = new Bid(bidder, amount, bidTime);
+                    list.add(bid);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[AuctionRepository] Lỗi lấy danh sách bid cho auction ID " + auctionId + ": " + e.getMessage());
+            e.printStackTrace();
+        }
+        return list;
     }
 
     public boolean addBidToRepo(int auctionId, Bid bid) {
-        return false;
+        String sql = "INSERT INTO bids (auction_id, bidder_id, amount, bid_time) VALUES (?, ?, ?, ?)";
+        try (Connection conn = DatabaseService.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, auctionId);
+            stmt.setInt(2, bid.getBidder().getId());
+            stmt.setDouble(3, bid.getAmount());
+            stmt.setTimestamp(4, Timestamp.valueOf(bid.getTime()));
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("[AuctionRepository] Lỗi lưu bid vào DB cho auction ID " + auctionId + ": " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean updateWinner(long auctionId, int winnerId) {
+        String sql = "UPDATE auctions SET winner_id = ? WHERE id = ?";
+        try (Connection conn = DatabaseService.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, winnerId);
+            stmt.setLong(2, auctionId);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("[AuctionRepository] Lỗi cập nhật winner_id cho auction ID " + auctionId + ": " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean updateTimes(long auctionId, java.time.LocalDateTime startTime, java.time.LocalDateTime endTime) {
+        String sql = "UPDATE auctions SET start_time = ?, end_time = ? WHERE id = ?";
+        try (Connection conn = DatabaseService.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setTimestamp(1, Timestamp.valueOf(startTime));
+            stmt.setTimestamp(2, Timestamp.valueOf(endTime));
+            stmt.setLong(3, auctionId);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("[AuctionRepository] Lỗi cập nhật thời gian cho auction ID " + auctionId + ": " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
     }
 }

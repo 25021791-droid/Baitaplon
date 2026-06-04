@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Locale;
 import java.io.File;
 import com.auction.common.model.Auction;
+import com.auction.common.model.Bid;
 import com.auction.server.service.AuctionRepository;
 import com.auction.server.service.AuctionService;
 import com.auction.server.service.ItemRepository;
@@ -97,7 +98,16 @@ public class ClientHandler implements Runnable {
                         double bidAmount = Double.parseDouble(parts[3]);
 
                         boolean isBidSuccess = auctionService.placeBid(auctionId, bidderId, bidAmount);
-                        sendMessage(out, isBidSuccess ? "BID_SUCCESS" : "BID_FAIL");
+                        if (isBidSuccess) {
+                            User updatedUser = userService.getUserById(bidderId);
+                            double newBalance = 0.0;
+                            if (updatedUser instanceof com.auction.common.model.Bidder) {
+                                newBalance = ((com.auction.common.model.Bidder) updatedUser).getBalance();
+                            }
+                            sendMessage(out, String.format(Locale.US, "BID_SUCCESS,%.2f", newBalance));
+                        } else {
+                            sendMessage(out, "BID_FAIL");
+                        }
                     } catch (Exception e) {
                         System.err.println("[Server] Lỗi xử lý đặt giá: " + e.getMessage());
                         sendMessage(out, "BID_FAIL");
@@ -152,10 +162,33 @@ public class ClientHandler implements Runnable {
                             }
                         }
 
+                        // Load bids from database
+                        List<Bid> bids = null;
+                        Auction loadedAuction = auctionService.getAuctionById(auction.getId().intValue());
+                        if (loadedAuction != null) {
+                            bids = loadedAuction.getBids();
+                        }
+                        StringBuilder bidsSb = new StringBuilder();
+                        if (bids != null) {
+                            for (int j = 0; j < bids.size(); j++) {
+                                Bid bid = bids.get(j);
+                                bidsSb.append(bid.getUsername()).append("#")
+                                      .append(bid.getAmount()).append("#")
+                                      .append(bid.getTime().toString());
+                                if (j < bids.size() - 1) {
+                                    bidsSb.append("_");
+                                }
+                            }
+                        }
+
+                        String endTimeStr = (auction.getEndTime() != null) ? auction.getEndTime().toString() : "";
+
                         responseBuilder.append(auction.getId()).append("|")
                                 .append(auction.getItem().getName()).append("|")
                                 .append(String.format(Locale.US, "%.2f", auction.getCurrentPrice())).append("|")
-                                .append(base64Img);
+                                .append(base64Img).append("|")
+                                .append(endTimeStr).append("|")
+                                .append(bidsSb.toString());
 
                         if (i < activeAuctions.size() - 1) {
                             responseBuilder.append(";");
@@ -198,7 +231,7 @@ public class ClientHandler implements Runnable {
                     newAuction.setStatus(AuctionStatus.ONQUEUE);
                     newAuction.setSellerId(sellerId);
                     newAuction.setStartTime(LocalDateTime.now());
-                    newAuction.setEndTime(LocalDateTime.now().plusDays(7));
+                    newAuction.setEndTime(LocalDateTime.now().plusSeconds(300));
 
                     ItemRepository itemRepo = new ItemRepository();
                     AuctionRepository auctionRepo = new AuctionRepository();

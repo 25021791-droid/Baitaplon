@@ -186,4 +186,18 @@ public class UserService {
         }
         return count > 0;
     }
+
+    public boolean updateBalance(int userId, double newBalance) {
+        String sql = "UPDATE users SET balance = ? WHERE id = ?";
+        try (Connection conn = DatabaseService.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setDouble(1, newBalance);
+            pstmt.setInt(2, userId);
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("[UserService] Lỗi cập nhật số dư cho user ID " + userId + ": " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
 }

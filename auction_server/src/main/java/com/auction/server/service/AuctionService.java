@@ -44,24 +44,22 @@ public class AuctionService {
                 return false;
             }
 
-            
+            // Ghi nhận giá mới và lưu Bid vào DB mà không thực hiện trừ/hoàn trả tiền ngay lập tức
             auction.setCurrentPrice(bidAmount);
 
+            Bid newBid = new Bid(bidder, bidAmount, java.time.LocalDateTime.now());
             try {
-                Bid newBid = new Bid(bidder, bidAmount, java.time.LocalDateTime.now());
+                auctionRepository.addBidToRepo((int) auctionId, newBid);
             } catch (Exception e) {
-                System.out.println("[AuctionService] Bỏ qua ghi log chi tiết Bid: " + e.getMessage());
+                System.err.println("[AuctionService] Lỗi khi lưu log Bid vào DB: " + e.getMessage());
             }
 
-            
-            
             boolean isUpdated = auctionRepository.updateCurrentPrice(auctionId, bidAmount);
             if (!isUpdated) {
-                
                 isUpdated = auctionRepository.saveOrUpdate(auction);
             }
 
-            System.out.println("[AuctionService] Cập nhật giá mới thành công lên hệ thống: đ " + bidAmount);
+            System.out.println("[AuctionService] Cập nhật giá mới thành công lên hệ thống (Chưa trừ tiền): đ " + bidAmount);
             return true;
         }
 
@@ -142,19 +140,26 @@ public class AuctionService {
         }
 
         auction.setStatus(AuctionStatus.FINISHED);
-        System.out.println("Auction finished!");
+        auctionRepository.updateStatus(auction.getId(), AuctionStatus.FINISHED);
+        System.out.println("[Server] Phiên đấu giá ID: " + auction.getId() + " đã kết thúc và chuyển trạng thái sang FINISHED.");
 
-        Bid winner = bidService.getWinner(auction);
-        if (winner != null) {
-            System.out.println("Winner found: " + winner.getBidder().getName());
+        List<Bid> bids = auctionRepository.getBidsByAuctionId(auction.getId().intValue());
+        if (bids != null && !bids.isEmpty()) {
+            Bid winnerBid = bids.get(bids.size() - 1);
+            Bidder bidder = winnerBid.getBidder();
+            double winningAmount = winnerBid.getAmount();
 
-            Bidder bidder = winner.getBidder();
-            double newBalance = bidder.getBalance() - winner.getAmount();
+            // Trừ tiền của người thắng cuộc khi kết thúc phiên đấu giá
+            double newBalance = bidder.getBalance() - winningAmount;
+            userService.updateBalance(bidder.getId(), newBalance);
 
-            bidder.setBalance(newBalance);
+            // Cập nhật người thắng cuộc vào CSDL
+            auctionRepository.updateWinner(auction.getId(), bidder.getId());
+            auction.setWinnerId(bidder.getId());
 
+            System.out.println("[Server] Tìm thấy người thắng cuộc: " + bidder.getName() + " (ID: " + bidder.getId() + "). Đã khấu trừ: đ " + winningAmount + ". Số dư còn lại: đ " + newBalance);
         } else {
-            System.out.println("No one participated in this auction.");
+            System.out.println("[Server] Phiên đấu giá kết thúc nhưng không có ai tham gia.");
         }
     }
 
@@ -180,7 +185,10 @@ public class AuctionService {
     public synchronized boolean approveAuction(int auctionId) {
         boolean success = auctionRepository.updateStatus(auctionId, AuctionStatus.RUNNING);
         if (success) {
-            System.out.println("[Server] Admin đã duyệt + bắt đầu dữ liệu trong DB cho auction ID: " + auctionId);
+            java.time.LocalDateTime now = java.time.LocalDateTime.now();
+            java.time.LocalDateTime endTime = now.plusSeconds(300);
+            auctionRepository.updateTimes(auctionId, now, endTime);
+            System.out.println("[Server] Admin đã duyệt + bắt đầu dữ liệu trong DB cho auction ID: " + auctionId + ". Thiết lập thời gian: " + now + " đến " + endTime);
         }
         return success;
     }
