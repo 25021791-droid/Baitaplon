@@ -1,6 +1,7 @@
 package com.auction.client.service;
 
 import com.auction.common.model.*;
+import com.auction.client.utils.UserSession;
 import javafx.application.Platform;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -133,6 +134,17 @@ public class NetworkClientService {
                         if (onLoginFail != null) Platform.runLater(() -> onLoginFail.accept("Đăng nhập thất bại!"));
                     }
                     else if ("BID_SUCCESS".equals(command) || "BID_OK".equals(command)) {
+                        if (parts.length > 1) {
+                            try {
+                                double newBalance = Double.parseDouble(parts[1]);
+                                User currentUser = UserSession.getUser();
+                                if (currentUser instanceof Bidder) {
+                                    ((Bidder) currentUser).setBalance(newBalance);
+                                }
+                            } catch (Exception e) {
+                                System.err.println("[NetworkClientService] Lỗi phân tích số dư mới: " + e.getMessage());
+                            }
+                        }
                         if (onBidResult != null) Platform.runLater(() -> onBidResult.accept(true));
                     }
                     else if ("BID_FAIL".equals(command)) {
@@ -213,6 +225,8 @@ public class NetworkClientService {
                                     String itemName = data[1];
                                     double currentPrice = Double.parseDouble(data[2]);
                                     String base64Image = (data.length >= 4) ? data[3] : "NO_IMAGE";
+                                    String endTimeStr = (data.length >= 5) ? data[4] : "";
+                                    String bidsRaw = (data.length >= 6) ? data[5] : "";
 
                                     Item item = new Item(auctionId, itemName) {};
                                     item.setImagePath(base64Image);
@@ -220,6 +234,32 @@ public class NetworkClientService {
                                     Auction auction = new Auction(item, currentPrice);
                                     auction.setId(auctionId);
                                     auction.setCurrentPrice(currentPrice);
+
+                                    if (endTimeStr != null && !endTimeStr.isEmpty()) {
+                                        try {
+                                            auction.setEndTime(java.time.LocalDateTime.parse(endTimeStr));
+                                        } catch (Exception e) {
+                                            System.err.println("[Client] Lỗi phân tích endTime của auction ID " + auctionId + ": " + e.getMessage());
+                                        }
+                                    }
+
+                                    // Phân tích lịch sử đặt giá gửi từ Server
+                                    List<Bid> bidList = new java.util.ArrayList<>();
+                                    if (bidsRaw != null && !bidsRaw.isEmpty()) {
+                                        String[] bidsSplit = bidsRaw.split("_");
+                                        for (String bRaw : bidsSplit) {
+                                            String[] bData = bRaw.split("#");
+                                            if (bData.length >= 3) {
+                                                String bUsername = bData[0];
+                                                double bAmount = Double.parseDouble(bData[1]);
+                                                java.time.LocalDateTime bTime = java.time.LocalDateTime.parse(bData[2]);
+                                                Bidder dummyBidder = new Bidder(0, bUsername, "", 0.0);
+                                                Bid bid = new Bid(dummyBidder, bAmount, bTime);
+                                                bidList.add(bid);
+                                            }
+                                        }
+                                    }
+                                    auction.setBids(bidList);
 
                                     auctionList.add(auction);
                                 }

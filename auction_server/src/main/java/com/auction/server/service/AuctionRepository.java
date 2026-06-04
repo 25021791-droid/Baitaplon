@@ -3,6 +3,7 @@ package com.auction.server.service;
 import com.auction.common.model.*;
 
 import java.sql.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -93,8 +94,7 @@ public class AuctionRepository {
         return list;
     }
 
-
-    public Auction getAuctionById(long auctionId) {
+    public Auction getAuctionById(int auctionId) {
         String sql = "SELECT a.*, i.name AS item_name, i.image_path AS item_image " +
                 "FROM auctions a " +
                 "INNER JOIN items i ON a.item_id = i.id " +
@@ -102,7 +102,7 @@ public class AuctionRepository {
         try (Connection conn = DatabaseService.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setLong(1, auctionId);
+            stmt.setInt(1, auctionId);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     return mapResultSetToAuction(rs);
@@ -114,14 +114,13 @@ public class AuctionRepository {
         return null;
     }
 
-
-    public boolean updateCurrentPrice(long auctionId, double newPrice) {
+    public boolean updateCurrentPrice(int auctionId, double newPrice) {
         String sql = "UPDATE auctions SET current_price = ? WHERE id = ?";
         try (Connection conn = DatabaseService.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setDouble(1, newPrice);
-            stmt.setLong(2, auctionId);
+            stmt.setInt(2, auctionId);
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -134,8 +133,24 @@ public class AuctionRepository {
         String sql = "UPDATE auctions SET status = ? WHERE id = ?";
         try (Connection conn = DatabaseService.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
+
             stmt.setString(1, newStatus.name());
-            stmt.setLong(2, auctionId);
+            stmt.setInt(2, auctionId);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    // -- Cập nhật winner
+    public boolean updateWinner(int auctionId, int userId) {
+        String sql = "UPDATE auctions SET winner_id = ? WHERE id = ?";
+        try (Connection conn = DatabaseService.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, userId);
+            stmt.setInt(2, auctionId);
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -257,5 +272,20 @@ public class AuctionRepository {
             e.printStackTrace();
         }
         return bidList;
+    }
+
+    public boolean updateTimes(int auctionId, LocalDateTime startTime, LocalDateTime endTime) {
+        String sql = "UPDATE auctions SET start_time = ?, end_time = ? WHERE id = ?";
+        try (Connection conn = DatabaseService.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setTimestamp(1, Timestamp.valueOf(startTime));
+            stmt.setTimestamp(2, Timestamp.valueOf(endTime));
+            stmt.setLong(3, auctionId);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("[AuctionRepository] Lỗi cập nhật thời gian cho auction ID " + auctionId + ": " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
     }
 }

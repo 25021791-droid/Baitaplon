@@ -14,12 +14,9 @@ public class Bidder extends User {
         this.bidHistory = new ArrayList<>();
     }
 
-    
     public Bidder(int userid, String username, String email) {
         this(userid, username, email, 100000.0);
     }
-
-    
 
     public double getBalance() {
         return balance;
@@ -34,9 +31,6 @@ public class Bidder extends User {
         System.out.println("Bidder Dashboard");
     }
 
-    
-
-    
     public boolean placeBid(Auction auction, double price) {
         if (price > this.balance) {
             System.out.println("[Từ chối] Số dư trong ví không đủ để thực hiện mức cược này.");
