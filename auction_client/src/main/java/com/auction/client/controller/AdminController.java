@@ -39,14 +39,14 @@ public class AdminController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
         this.networkService = NetworkClientService.getInstance();
 
-        // Khởi tạo cấu trúc các cột cho bảng hiển thị dữ liệu
+        
         setupPendingAuctionsTable();
         setupAllAuctionsTable();
 
-        // Cấu hình tương tác cho nút bấm Refresh (Làm mới)
+        
         btnRefresh.setOnAction(event -> loadSystemData());
 
-        // ========== CALLBACK: Nhận danh sách các phiên đấu giá đang kích hoạt (Active) ==========
+        
         networkService.setOnActiveAuctionsReceived(auctions -> {
             Platform.runLater(() -> {
                 tableAllAuctions.getItems().clear();
@@ -55,7 +55,7 @@ public class AdminController implements Initializable {
             });
         });
 
-        // ========== 🔥 ĐÃ GOM LẠI: Callback nhận danh sách chờ duyệt duy nhất (Tránh ghi đè lỗi) ==========
+        
         networkService.setOnPendingAuctionsReceived(auctions -> {
             System.out.println("[Admin Client] Tiếp nhận danh sách chờ duyệt thành công. Số lượng: " + auctions.size());
             Platform.runLater(() -> {
@@ -65,20 +65,20 @@ public class AdminController implements Initializable {
             });
         });
 
-        // ========== CALLBACK: Kết quả phê duyệt phiên đấu giá (Approve) ==========
+        
         networkService.setOnApproveAuctionResult(success -> {
             Platform.runLater(() -> {
                 if (success) {
                     showAlert("Thành công", "Đã duyệt và kích hoạt phiên đấu giá này lên hệ thống công khai!");
-                    networkService.requestPendingAuctions(); // Refresh danh sách chờ duyệt ngay lập tức
-                    networkService.requestActiveAuctions();  // Đồng bộ lại bảng quản lý chung
+                    networkService.requestPendingAuctions(); 
+                    networkService.requestActiveAuctions();  
                 } else {
                     showAlert("Lỗi", "Quá trình phê duyệt gặp sự cố. Vui lòng kiểm tra lại trạng thái DB!");
                 }
             });
         });
 
-        // ========== CALLBACK: Kết quả xử lý yêu cầu hủy phiên đấu giá (Cancel) ==========
+        
         networkService.setOnCancelAuctionResult(success -> {
             Platform.runLater(() -> {
                 if (success) {
@@ -86,16 +86,16 @@ public class AdminController implements Initializable {
                 } else {
                     showAlert("Lỗi", "Không thể thực hiện lệnh hủy phiên đấu giá này!");
                 }
-                // Đồng bộ cập nhật giao diện tổng thể sau khi có phản hồi chính thức từ Server
+                
                 loadSystemData();
             });
         });
 
-        // Đăng ký sự kiện click trực tiếp cho các nút bấm tác vụ
+        
         btnCancelAuction.setOnAction(event -> handleCancelSelectedAuction());
         btnApprove.setOnAction(event -> handleApprove());
 
-        // Kích hoạt nạp dữ liệu hệ thống tự động ngay khi vừa mở màn hình Admin lên
+        
         loadSystemData();
     }
 
@@ -216,7 +216,7 @@ public class AdminController implements Initializable {
     private void handleLogout() {
         UserSession.cleanUserSession();
 
-        // Thu dọn đóng tất cả cửa sổ đang bật của tài khoản Admin hiện tại
+        
         Stage stage = (Stage) Stage.getWindows().stream()
                 .filter(Window -> Window.isShowing())
                 .findFirst()
@@ -226,7 +226,7 @@ public class AdminController implements Initializable {
             stage.close();
         }
 
-        // Điều hướng mượt mà người dùng quay trở lại màn hình Đăng Nhập chính thức
+        
         Platform.runLater(() -> {
             try {
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/auction/Login.fxml"));
@@ -243,7 +243,7 @@ public class AdminController implements Initializable {
 
     private void showAlert(String title, String content) {
         Platform.runLater(() -> {
-            Alert alert = new Alert(Alert.AlertType.INFORMATION); // Đổi sang INFORMATION nhìn trực quan hơn WARNING
+            Alert alert = new Alert(Alert.AlertType.INFORMATION); 
             alert.setTitle(title);
             alert.setHeaderText(null);
             alert.setContentText(content);

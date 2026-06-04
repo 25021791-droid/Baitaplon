@@ -38,14 +38,14 @@ public class BidderCardController {
             lblTime.setText("Không xác định");
         }
 
-        // --- ĐÃ CẬP NHẬT: GIẢI MÃ CHUỖI BASE64 ĐỂ HIỂN THỊ ẢNH TRÊN CARD ---
+        
         String base64Image = auction.getItem().getImagePath();
 
         if (base64Image != null && !base64Image.equals("NO_IMAGE") && !base64Image.isEmpty()) {
             try {
-                // Giải mã chuỗi ký tự Base64 nhận từ mạng LAN thành mảng bytes
+                
                 byte[] imageBytes = Base64.getDecoder().decode(base64Image);
-                // Tạo đối tượng Image trực tiếp từ luồng byte thô
+                
                 Image image = new Image(new ByteArrayInputStream(imageBytes));
                 imgItem.setImage(image);
             } catch (Exception e) {
@@ -53,14 +53,12 @@ public class BidderCardController {
                 loadDefaultImage();
             }
         } else {
-            // Nếu không có ảnh đi kèm từ Server, dùng ảnh fallback mặc định
+            
             loadDefaultImage();
         }
     }
 
-    /**
-     * Hàm phụ trợ nạp ảnh mặc định từ tài nguyên hệ thống
-     */
+    
     private void loadDefaultImage() {
         try {
             InputStream stream = getClass().getResourceAsStream("/images/default.png");

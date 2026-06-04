@@ -15,7 +15,7 @@ public class Auction {
     private int sellerId;
     private int winnerId;
 
-    // Mặc định khởi tạo thời gian khi tạo object
+    
     private LocalDateTime startTime = LocalDateTime.now();
     private LocalDateTime endTime = LocalDateTime.now().plusHours(24);
 
@@ -26,8 +26,8 @@ public class Auction {
         this.item = item;
         this.startingPrice = startPrice;
 
-        // 🔥 ĐÃ FIX: Khởi tạo giá hiện tại bằng giá khởi điểm.
-        // Nếu không có dòng này, currentPrice sẽ bằng 0.0 (mặc định của kiểu double).
+        
+        
         this.currentPrice = startPrice;
 
         this.bids = new ArrayList<>();
@@ -40,7 +40,7 @@ public class Auction {
                 this.status == AuctionStatus.PAID;
     }
 
-    // ================= GETTERS & SETTERS =================
+    
 
     public Long getId() {
         return id;

@@ -1,13 +1,11 @@
-com\auction\common\model\Art.class
+com\auction\common\model\User.class
 com\auction\common\model\AuctionStatus.class
 com\auction\common\model\Entity.class
-com\auction\common\model\Vehicle.class
 com\auction\common\model\Item.class
+module-info.class
 com\auction\common\model\Bid.class
 com\auction\common\model\Bidder.class
 com\auction\common\model\Seller.class
 com\auction\common\observer\BidObserver.class
-com\auction\common\model\Electronics.class
-com\auction\common\model\User.class
 com\auction\common\model\Auction.class
 com\auction\common\model\Admin.class

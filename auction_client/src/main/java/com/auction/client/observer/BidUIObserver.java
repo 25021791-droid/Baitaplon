@@ -20,12 +20,12 @@ public class BidUIObserver implements BidObserver {
         });
     }
 
-    // 🔥 ĐÃ FIX: Bổ sung phương thức bị thiếu để hoàn thành "hợp đồng" với Interface
+    
     @Override
     public void update(Bid newBid) {
         Platform.runLater(() -> {
             if (newBid != null && newBid.getBidder() != null) {
-                // Bạn có thể tùy biến chuỗi hiển thị ở đây cho đẹp mắt
+                
                 String uiMessage = String.format("%s vừa cược: %,.0f VNĐ",
                         newBid.getBidder().getName(),
                         newBid.getAmount());

@@ -34,7 +34,7 @@ public class NetworkClientService {
     private Consumer<Boolean> onApproveAuctionResult;
     private Consumer<Boolean> onCreateAuctionResult;
 
-    // ================= GETTERS & SETTERS CALLBACKS =================
+    
 
     public void setOnEndedAuctionsReceived(Consumer<List<Auction>> c) { this.onEndedAuctionsReceived = c; }
     public void setOnCancelAuctionResult(Consumer<Boolean> c) { this.onCancelAuctionResult = c; }
@@ -52,7 +52,7 @@ public class NetworkClientService {
     public void setOnNewBidBroadcast(Consumer<String> callback) { this.onNewBidBroadcast = callback; }
     public void setOnCreateAuctionResult(Consumer<Boolean> callback) { this.onCreateAuctionResult = callback; }
 
-    // ================= KHỞI TẠO & KẾT NỐI =================
+    
 
     private NetworkClientService() {
         Thread initThread = new Thread(() -> {
@@ -84,7 +84,7 @@ public class NetworkClientService {
         return socket != null && socket.isConnected() && !socket.isClosed() && out != null;
     }
 
-    // 🔥 HÀM TIỆN ÍCH: Gửi dữ liệu bằng mảng byte để vượt qua giới hạn 64KB của writeUTF
+    
     private void sendMessage(String message) throws IOException {
         byte[] payload = message.getBytes(java.nio.charset.StandardCharsets.UTF_8);
         out.writeInt(payload.length);
@@ -92,13 +92,13 @@ public class NetworkClientService {
         out.flush();
     }
 
-    // ================= VÒNG LẶP LẮNG NGHE TỪ SERVER =================
+    
 
     private void startListening() {
         Thread listenerThread = new Thread(() -> {
             try {
                 while (true) {
-                    // 🔥 Đọc kích thước mảng byte thay vì dùng readUTF()
+                    
                     int length = in.readInt();
 
                     if (length > 20 * 1024 * 1024) {
@@ -292,7 +292,7 @@ public class NetworkClientService {
         listenerThread.start();
     }
 
-    // ================= CÁC HÀM GỬI YÊU CẦU LÊN SERVER =================
+    
 
     public void requestMyAuctions(int sellerId) {
         if (!isConnected()) return;
