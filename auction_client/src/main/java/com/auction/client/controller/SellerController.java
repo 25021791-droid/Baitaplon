@@ -30,7 +30,10 @@ public class SellerController implements Initializable {
     @FXML private Button btnChooseImage;
     @FXML private Label lblImageName;
     @FXML private ImageView imgPreview;
+    @FXML private TextField txtDuration;
     @FXML private TableView<Auction> tableMyAuctions;
+    @FXML private Label lblUsername;
+    @FXML private Label lblAvatarLetter;
 
     private File selectedImageFile;
     private NetworkClientService networkService;
@@ -44,6 +47,12 @@ public class SellerController implements Initializable {
         User currentUser = UserSession.getUser();
         if (currentUser != null) {
             networkService.requestMyAuctions(currentUser.getId());
+            if (lblUsername != null) {
+                lblUsername.setText("Seller: " + currentUser.getName());
+            }
+            if (lblAvatarLetter != null && currentUser.getName() != null && !currentUser.getName().isEmpty()) {
+                lblAvatarLetter.setText(currentUser.getName().substring(0, 1).toUpperCase());
+            }
         }
 
         networkService.setOnMyAuctionsReceived(auctions -> {
@@ -62,6 +71,7 @@ public class SellerController implements Initializable {
                     txtStartPrice.clear();
                     lblImageName.setText("Chưa chọn ảnh");
                     imgPreview.setVisible(false);
+                    txtDuration.clear();
                     selectedImageFile = null;
                     User user = UserSession.getUser();
                     if (user != null) {
@@ -89,7 +99,7 @@ public class SellerController implements Initializable {
         colName.setPrefWidth(250);
 
         TableColumn<Auction, String> colPrice = new TableColumn<>("Giá Hiện Tại");
-        colPrice.setCellValueFactory(cell -> new SimpleStringProperty(String.format("%.2f", cell.getValue().getCurrentPrice())));
+        colPrice.setCellValueFactory(cell -> new SimpleStringProperty(String.format("%.0f VNĐ", cell.getValue().getCurrentPrice())));
         colPrice.setPrefWidth(150);
 
         TableColumn<Auction, String> colStatus = new TableColumn<>("Trạng Thái");
@@ -108,6 +118,11 @@ public class SellerController implements Initializable {
             return;
         }
 
+        if (itemName.contains(",")) {
+            showAlert("Lỗi nhập liệu", "Tên sản phẩm không được chứa dấu phẩy!");
+            return;
+        }
+
         try {
             double startPrice = Double.parseDouble(priceStr);
             if (startPrice <= 0) {
@@ -122,8 +137,21 @@ public class SellerController implements Initializable {
             }
             int sellerId = currentUser.getId();
 
-            
-            networkService.createAuction(itemName, startPrice, sellerId, selectedImageFile);
+            int durationMinutes = 4320;
+            String durationStr = txtDuration.getText().trim();
+            if (!durationStr.isEmpty()) {
+                try {
+                    durationMinutes = Integer.parseInt(durationStr);
+                    if (durationMinutes <= 0 || durationMinutes > 4320) {
+                        showAlert("Lỗi thời gian", "Thời gian đấu giá phải từ 1 đến 4320 phút (tối đa 3 ngày)!");
+                        return;
+                    }
+                } catch (NumberFormatException ex) {
+                    showAlert("Lỗi nhập liệu", "Thời gian đấu giá phải là số nguyên!");
+                    return;
+                }
+            }
+            networkService.createAuction(itemName, startPrice, sellerId, selectedImageFile, durationMinutes);
 
         } catch (NumberFormatException e) {
             showAlert("Lỗi nhập liệu", "Giá khởi điểm phải là một con số hợp lệ!");

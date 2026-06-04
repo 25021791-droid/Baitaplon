@@ -8,9 +8,9 @@ public class DescribeBids {
             "jdbc:mysql://mysql-24ec3754-prject.b.aivencloud.com:23268/defaultdb?useSSL=true&trustServerCertificate=true",
             "avnadmin", "AVNS_5zRsqM5L8lWsvYIKcf5");
         ResultSet rs = c.createStatement().executeQuery("DESCRIBE bids");
-        System.out.println("=== COLUMNS IN BIDS TABLE ===");
+        System.out.println("=== CÁC CỘT TRONG BẢNG BIDS ===");
         while (rs.next()) {
-            System.out.println("Column: " + rs.getString("Field") + " | Type: " + rs.getString("Type"));
+            System.out.println("Cột: " + rs.getString("Field") + " | Kiểu: " + rs.getString("Type"));
         }
         rs.close();
         c.close();

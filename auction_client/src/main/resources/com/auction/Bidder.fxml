@@ -12,48 +12,60 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
 <BorderPane prefHeight="750.0" prefWidth="1100.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.controller.BidderController">
 
     <top>
-        <HBox alignment="CENTER_LEFT" prefHeight="65.0" style="-fx-background-color: #2c3e50; -fx-padding: 0 20 0 20;">
-            <children>
-                <Label text="SÀN ĐẤU GIÁ TRỰC TUYẾN" textFill="WHITE">
-                    <font>
-                        <Font name="System Bold" size="20.0" />
-                    </font>
-                </Label>
-                <HBox HBox.hgrow="ALWAYS" />
-
-                <VBox alignment="CENTER_RIGHT" spacing="3.0">
+        <BorderPane prefHeight="65.0" style="-fx-background-color: #2c3e50; -fx-padding: 10 20 10 20;">
+            <left>
+                <HBox alignment="CENTER_LEFT" spacing="15.0" BorderPane.alignment="CENTER">
                     <children>
-                        <Label fx:id="lblUsername" text="User: Chưa đăng nhập" textFill="WHITE">
-                            <font>
-                                <Font name="System Bold" size="14.0" />
-                            </font>
-                        </Label>
-                        <HBox alignment="CENTER_RIGHT" spacing="5.0">
+                        <StackPane onMouseClicked="#handleProfile" style="-fx-background-color: #3498db; -fx-background-radius: 50; -fx-cursor: hand;" prefWidth="40.0" prefHeight="40.0" minWidth="40.0" minHeight="40.0">
                             <children>
-                                <Label text="Ví tiền:" textFill="#bdc3c7" />
-                                <Label fx:id="lblBalance" text="0.00" textFill="#2ecc71">
+                                <Label fx:id="lblAvatarLetter" text="U" textFill="WHITE" style="-fx-font-weight: bold; -fx-font-size: 16.0;" />
+                            </children>
+                        </StackPane>
+                        <VBox alignment="CENTER_LEFT" spacing="3.0">
+                            <children>
+                                <Label fx:id="lblUsername" text="User: Chưa đăng nhập" textFill="WHITE">
                                     <font>
                                         <Font name="System Bold" size="14.0" />
                                     </font>
                                 </Label>
+                                <HBox alignment="CENTER_LEFT" spacing="5.0">
+                                    <children>
+                                        <Label text="Ví tiền: " textFill="#bdc3c7" />
+                                        <Label fx:id="lblBalance" text="0.00" textFill="#2ecc71">
+                                            <font>
+                                                <Font name="System Bold" size="14.0" />
+                                            </font>
+                                        </Label>
+                                    </children>
+                                </HBox>
                             </children>
-                        </HBox>
+                        </VBox>
                     </children>
-                    <HBox.margin>
-                        <Insets right="20.0" />
-                    </HBox.margin>
-                </VBox>
-                <Button mnemonicParsing="false" onAction="#handleRefresh" style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold;" text="Làm mới" />
-                <Button mnemonicParsing="false" onAction="#handleProfile" style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-weight: bold;" text="Profile" />
-                <Button mnemonicParsing="false" onAction="#handleBackToLogin" style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-weight: bold;" text="Đăng Xuất" />
-            </children>
-        </HBox>
+                </HBox>
+            </left>
+            <center>
+                <Label text="SÀN ĐẤU GIÁ TRỰC TUYẾN" textFill="WHITE" BorderPane.alignment="CENTER">
+                    <font>
+                        <Font name="System Bold" size="20.0" />
+                    </font>
+                </Label>
+            </center>
+            <right>
+                <HBox alignment="CENTER_RIGHT" spacing="10.0" BorderPane.alignment="CENTER">
+                    <children>
+                        <Button mnemonicParsing="false" onAction="#handleRefresh" style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold;" text="Làm mới" />
+                        <Button mnemonicParsing="false" onAction="#handleBackToLogin" style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-weight: bold;" text="Đăng Xuất" />
+                    </children>
+                </HBox>
+            </right>
+        </BorderPane>
     </top>
 
     <center>
@@ -103,7 +115,7 @@
 
                                 <Label fx:id="lblItemDescription" text="Mô tả: Chọn một sản phẩm để xem chi tiết." wrapText="true" />
 
-                                <Label fx:id="lblCurrentPrice" text="Giá hiện tại: $0.0" textFill="#e67e22">
+                                <Label fx:id="lblCurrentPrice" text="Giá hiện tại: 0.0" textFill="#e67e22">
                                     <font>
                                         <Font name="System Bold" size="14.0" />
                                     </font>

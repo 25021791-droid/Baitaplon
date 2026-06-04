@@ -20,29 +20,58 @@ import java.time.LocalDateTime;
 import java.nio.charset.StandardCharsets;
 
 public class ClientHandler implements Runnable {
+    private static final java.util.concurrent.CopyOnWriteArrayList<ClientHandler> activeHandlers = new java.util.concurrent.CopyOnWriteArrayList<>();
+
     private final Socket clientSocket;
     private final UserService userService = new UserService();
     private final AuctionService auctionService = new AuctionService();
+    private DataOutputStream out;
+    private final Object writeLock = new Object();
 
     public ClientHandler(Socket socket) {
         this.clientSocket = socket;
     }
 
-    
+    public static void broadcast(String message) {
+        for (ClientHandler handler : activeHandlers) {
+            try {
+                handler.sendDirectMessage(message);
+            } catch (Exception e) {
+                // Client có thể đã ngắt kết nối
+            }
+        }
+    }
+
+    private void sendDirectMessage(String message) throws IOException {
+        synchronized (writeLock) {
+            if (this.out != null) {
+                byte[] payload = message.getBytes(StandardCharsets.UTF_8);
+                this.out.writeInt(payload.length);
+                this.out.write(payload);
+                this.out.flush();
+            }
+        }
+    }
+
     private void sendMessage(DataOutputStream out, String message) throws IOException {
-        byte[] payload = message.getBytes(StandardCharsets.UTF_8);
-        out.writeInt(payload.length);
-        out.write(payload);
-        out.flush();
+        synchronized (writeLock) {
+            byte[] payload = message.getBytes(StandardCharsets.UTF_8);
+            out.writeInt(payload.length);
+            out.write(payload);
+            out.flush();
+        }
     }
 
     @Override
     public void run() {
         String clientIp = clientSocket.getRemoteSocketAddress().toString();
         System.out.println("[Server] Bắt đầu luồng xử lý kết nối cho client: " + clientIp);
+        activeHandlers.add(this);
         try {
             DataInputStream in = new DataInputStream(clientSocket.getInputStream());
-            DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
+            synchronized (writeLock) {
+                this.out = new DataOutputStream(clientSocket.getOutputStream());
+            }
 
             boolean isRunning = true;
             while (isRunning) {
@@ -82,12 +111,12 @@ public class ClientHandler implements Runnable {
                         if (user instanceof com.auction.common.model.Admin) role = "ADMIN";
                         else if (user instanceof com.auction.common.model.Seller) role = "SELLER";
 
-                        String response = String.format(Locale.US, "LOGIN_SUCCESS,%d,%s,%s,%.2f,%s", id, name, email, balance, role);
-                        System.out.println(String.format("[Server LOGIN] Đăng nhập THÀNH CÔNG: ID=%d, Tên=%s, Email=%s, Số dư=%.2f, Vai trò=%s", id, name, email, balance, role));
-                        sendMessage(out, response);
+                        String response = String.format(Locale.US, "LOGIN_SUCCESS,%d,%s,%s,%.0f,%s", id, name, email, balance, role);
+                        System.out.println(String.format("[Server LOGIN] Đăng nhập THÀNH CÔNG: ID=%d, Tên=%s, Email=%s, Số dư=%.0f, Vai trò=%s", id, name, email, balance, role));
+                        sendMessage(this.out, response);
                     } else {
                         System.out.println("[Server LOGIN] Đăng nhập THẤT BẠI cho user: " + username + " (Sai tên đăng nhập hoặc mật khẩu)");
-                        sendMessage(out, "LOGIN_FAIL");
+                        sendMessage(this.out, "LOGIN_FAIL");
                     }
 
                 } else if ("BID".equals(command)) {
@@ -97,23 +126,44 @@ public class ClientHandler implements Runnable {
                         int bidderId = Integer.parseInt(parts[2]);
                         double bidAmount = Double.parseDouble(parts[3]);
 
-                        System.out.println(String.format("[Server BID] Đặt giá: Auction ID=%d, Bidder ID=%d, Số tiền=%.2f", auctionId, bidderId, bidAmount));
+                        System.out.println(String.format("[Server BID] Đặt giá: Auction ID=%d, Bidder ID=%d, Số tiền=%.0f", auctionId, bidderId, bidAmount));
                         boolean isBidSuccess = auctionService.placeBid(auctionId, bidderId, bidAmount);
                         if (isBidSuccess) {
                             User updatedUser = userService.getUserById(bidderId);
                             double newBalance = 0.0;
+                            String bidderName = "Ẩn danh";
                             if (updatedUser instanceof com.auction.common.model.Bidder) {
                                 newBalance = ((com.auction.common.model.Bidder) updatedUser).getBalance();
+                                bidderName = updatedUser.getName();
                             }
-                            System.out.println(String.format("[Server BID] Đặt giá THÀNH CÔNG: Auction ID=%d, Bidder ID=%d, Số dư còn lại=%.2f", auctionId, bidderId, newBalance));
-                            sendMessage(out, String.format(Locale.US, "BID_SUCCESS,%.2f", newBalance));
+                            System.out.println(String.format("[Server BID] Đặt giá THÀNH CÔNG: Auction ID=%d, Bidder ID=%d, Số dư còn lại=%.0f", auctionId, bidderId, newBalance));
+                            sendMessage(this.out, String.format(Locale.US, "BID_SUCCESS,%.0f", newBalance));
+
+                            // Broadcast giá bid mới đến tất cả các clients để cập nhật realtime
+                            Auction auction = auctionService.getAuctionById((int) auctionId);
+                            String timeLeft = "Đang diễn ra";
+                            if (auction != null && auction.getEndTime() != null) {
+                                java.time.Duration duration = java.time.Duration.between(java.time.LocalDateTime.now(), auction.getEndTime());
+                                long seconds = duration.toSeconds();
+                                if (seconds <= 0) {
+                                    timeLeft = "Phiên đấu giá đã kết thúc!";
+                                } else {
+                                    long hours = seconds / 3600;
+                                    long minutes = (seconds % 3600) / 60;
+                                    long secs = seconds % 60;
+                                    timeLeft = String.format("Thời gian còn lại: %02d:%02d:%02d", hours, minutes, secs);
+                                }
+                            }
+                            String bcastMsg = String.format(Locale.US, "NEW_BID,%d,%.0f,%s,%s", auctionId, bidAmount, bidderName, timeLeft);
+                            System.out.println("[Server Broadcast] Gửi tin NEW_BID đến tất cả client...");
+                            broadcast(bcastMsg);
                         } else {
-                            System.out.println(String.format("[Server BID] Đặt giá THẤT BẠI: Auction ID=%d, Bidder ID=%d, Số tiền=%.2f", auctionId, bidderId, bidAmount));
-                            sendMessage(out, "BID_FAIL");
+                            System.out.println(String.format("[Server BID] Đặt giá THẤT BẠI: Auction ID=%d, Bidder ID=%d, Số tiền=%.0f", auctionId, bidderId, bidAmount));
+                            sendMessage(this.out, "BID_FAIL");
                         }
                     } catch (Exception e) {
                         System.err.println("[Server BID] Lỗi xử lý đặt giá: " + e.getMessage());
-                        sendMessage(out, "BID_FAIL");
+                        sendMessage(this.out, "BID_FAIL");
                     }
 
                 } else if ("REGISTER".equals(command)) {
@@ -195,7 +245,7 @@ public class ClientHandler implements Runnable {
 
                         responseBuilder.append(auction.getId()).append("|")
                                 .append(auction.getItem().getName()).append("|")
-                                .append(String.format(Locale.US, "%.2f", auction.getCurrentPrice())).append("|")
+                                .append(String.format(Locale.US, "%.0f", auction.getCurrentPrice())).append("|")
                                 .append(base64Img).append("|")
                                 .append(endTimeStr).append("|")
                                 .append(bidsSb.toString());
@@ -213,24 +263,41 @@ public class ClientHandler implements Runnable {
                     StringBuilder sb = new StringBuilder("ENDED_AUCTIONS,");
                     for (int i = 0; i < ended.size(); i++) {
                         Auction a = ended.get(i);
+
+                        String base64Img = "NO_IMAGE";
+                        String imgPath = a.getItem().getImagePath();
+                        if (imgPath != null && !imgPath.isEmpty()) {
+                            File imgFile = new File(imgPath);
+                            if (imgFile.exists()) {
+                                try {
+                                    byte[] fileContent = java.nio.file.Files.readAllBytes(imgFile.toPath());
+                                    base64Img = java.util.Base64.getEncoder().encodeToString(fileContent);
+                                } catch (Exception e) {
+                                    System.err.println("[Server GET_ENDED_AUCTIONS] Không thể chuyển đổi ảnh sang Base64 cho vật phẩm " + a.getItem().getName() + ": " + e.getMessage());
+                                }
+                            }
+                        }
+
                         sb.append(a.getId()).append("|")
                                 .append(a.getItem().getName()).append("|")
-                                .append(String.format(Locale.US, "%.2f", a.getCurrentPrice())).append("|")
-                                .append(a.getStatus().toString());
+                                .append(String.format(Locale.US, "%.0f", a.getCurrentPrice())).append("|")
+                                .append(a.getStatus().toString()).append("|")
+                                .append(base64Img);
                         if (i < ended.size() - 1) sb.append(";");
                     }
                     System.out.println("[Server GET_ENDED_AUCTIONS] Gửi danh sách " + ended.size() + " phiên đã kết thúc.");
                     sendMessage(out, sb.toString());
 
                 } else if ("CREATE_AUCTION".equals(command)) {
-                    String[] parts = request.split(",", 5);
+                    String[] parts = request.split(",", 6);
 
                     String itemName = parts[1];
                     double startPrice = Double.parseDouble(parts[2]);
                     int sellerId = Integer.parseInt(parts[3]);
                     String base64Image = parts[4];
+                    int durationMinutes = Integer.parseInt(parts[5]);
 
-                    System.out.println(String.format("[Server CREATE_AUCTION] Yêu cầu tạo phiên đấu giá: Tên=%s, Giá khởi điểm=%.2f, Seller ID=%d", itemName, startPrice, sellerId));
+                    System.out.println(String.format("[Server CREATE_AUCTION] Yêu cầu tạo phiên đấu giá: Tên=%s, Giá khởi điểm=%.0f, Seller ID=%d, Thời gian=%d phút", itemName, startPrice, sellerId, durationMinutes));
                     System.out.println("[Server CREATE_AUCTION] Giải mã dữ liệu ảnh...");
 
                     String imagePath = null;
@@ -245,7 +312,9 @@ public class ClientHandler implements Runnable {
                     newAuction.setStatus(AuctionStatus.ONQUEUE);
                     newAuction.setSellerId(sellerId);
                     newAuction.setStartTime(LocalDateTime.now());
-                    newAuction.setEndTime(LocalDateTime.now().plusSeconds(300));
+                    // Giới hạn thời gian từ 1 đến 4320 phút (tối đa 3 ngày)
+                    int clampedDuration = Math.max(1, Math.min(durationMinutes, 4320));
+                    newAuction.setEndTime(LocalDateTime.now().plusMinutes(clampedDuration));
 
                     ItemRepository itemRepo = new ItemRepository();
                     AuctionRepository auctionRepo = new AuctionRepository();
@@ -270,7 +339,7 @@ public class ClientHandler implements Runnable {
                         Auction a = pending.get(i);
                         sb.append(a.getId()).append("|")
                                 .append(a.getItem().getName()).append("|")
-                                .append(String.format(Locale.US, "%.2f", a.getCurrentPrice())).append("|")
+                                .append(String.format(Locale.US, "%.0f", a.getCurrentPrice())).append("|")
                                 .append(a.getSellerId());
                         if (i < pending.size() - 1) sb.append(";");
                     }
@@ -288,7 +357,7 @@ public class ClientHandler implements Runnable {
                         Auction a = myAuctions.get(i);
                         sb.append(a.getId()).append("|")
                                 .append(a.getItem().getName()).append("|")
-                                .append(String.format(Locale.US, "%.2f", a.getCurrentPrice())).append("|")
+                                .append(String.format(Locale.US, "%.0f", a.getCurrentPrice())).append("|")
                                 .append(a.getStatus().toString());
                         if (i < myAuctions.size() - 1) sb.append(";");
                     }
@@ -311,19 +380,57 @@ public class ClientHandler implements Runnable {
                     System.out.println("[Server CANCEL_AUCTION] Kết quả hủy phiên ID=" + auctionId + ": " + (ok ? "THÀNH CÔNG" : "THẤT BẠI"));
                     sendMessage(out, ok ? "CANCEL_AUCTION_SUCCESS" : "CANCEL_AUCTION_FAIL");
 
+                } else if ("GET_ALL_USERS".equals(command)) {
+                    System.out.println("[Server GET_ALL_USERS] Lấy danh sách tất cả người dùng...");
+                    java.util.List<String[]> allUsers = userService.getAllUsers();
+                    StringBuilder sb = new StringBuilder("ALL_USERS,");
+                    for (int i = 0; i < allUsers.size(); i++) {
+                        String[] u = allUsers.get(i);
+                        // định dạng: id|tên_đăng_nhập|email|vai_trò|số_dư
+                        sb.append(u[0]).append("|").append(u[1]).append("|").append(u[2]).append("|").append(u[3]).append("|").append(u[4]);
+                        if (i < allUsers.size() - 1) sb.append(";");
+                    }
+                    System.out.println("[Server GET_ALL_USERS] Gửi danh sách " + allUsers.size() + " người dùng.");
+                    sendMessage(out, sb.toString());
+
+                } else if ("DELETE_USER".equals(command)) {
+                    String[] parts = request.split(",");
+                    int userId = Integer.parseInt(parts[1]);
+                    System.out.println("[Server DELETE_USER] Xóa người dùng ID: " + userId);
+                    boolean ok = userService.deleteUser(userId);
+                    System.out.println("[Server DELETE_USER] Kết quả: " + (ok ? "THÀNH CÔNG" : "THẤT BẠI"));
+                    sendMessage(out, ok ? "DELETE_USER_SUCCESS" : "DELETE_USER_FAIL");
+
+                } else if ("UPDATE_USER".equals(command)) {
+                    String[] parts = request.split(",");
+                    int userId = Integer.parseInt(parts[1]);
+                    String username = parts[2];
+                    String email = parts[3];
+                    System.out.println("[Server UPDATE_USER] Cập nhật người dùng ID: " + userId);
+                    boolean ok = userService.updateProfile(userId, username, email);
+                    System.out.println("[Server UPDATE_USER] Kết quả: " + (ok ? "THÀNH CÔNG" : "THẤT BẠI"));
+                    sendMessage(out, ok ? "UPDATE_USER_SUCCESS" : "UPDATE_USER_FAIL");
+
                 } else if ("LOGOUT".equals(command)) {
                     System.out.println("[Server LOGOUT] Client " + clientIp + " yêu cầu đăng xuất.");
                     sendMessage(out, "GOODBYE");
                     isRunning = false;
                 }
             }
-            in.close();
-            out.close();
-            clientSocket.close();
-            System.out.println("[Server] Đóng kết nối bình thường với client: " + clientIp);
-
         } catch (Exception e) {
             System.out.println("[Server] Kết nối bị ngắt đột ngột hoặc lỗi xảy ra với client: " + clientIp + ". Chi tiết: " + e.getMessage());
+        } finally {
+            activeHandlers.remove(this);
+            synchronized (writeLock) {
+                try {
+                    if (this.out != null) this.out.close();
+                } catch (Exception ignored) {}
+                    this.out = null;
+            }
+            try {
+                clientSocket.close();
+            } catch (Exception ignored) {}
+            System.out.println("[Server] Đã dọn dẹp tài nguyên và đóng kết nối cho client: " + clientIp);
         }
     }
 

@@ -5,86 +5,96 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<VBox prefHeight="700.0" prefWidth="900.0" spacing="15.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.controller.AdminController">
+<VBox prefHeight="750.0" prefWidth="950.0" spacing="15.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.controller.AdminController">
     <padding>
         <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
     </padding>
 
-    <HBox alignment="CENTER_LEFT" spacing="20.0">
-        <Label text="Hệ thống Quản Trị (Admin Panel)" HBox.hgrow="ALWAYS">
+    <BorderPane prefHeight="65.0" style="-fx-background-color: #2c3e50; -fx-padding: 10 20 10 20; -fx-background-radius: 5;">
+        <left>
+            <HBox alignment="CENTER_LEFT" spacing="15.0" BorderPane.alignment="CENTER">
+                <children>
+                    <StackPane onMouseClicked="#handleProfile" style="-fx-background-color: #3498db; -fx-background-radius: 50; -fx-cursor: hand;" prefWidth="40.0" prefHeight="40.0" minWidth="40.0" minHeight="40.0">
+                        <children>
+                            <Label fx:id="lblAvatarLetter" text="A" textFill="WHITE" style="-fx-font-weight: bold; -fx-font-size: 16.0;" />
+                        </children>
+                    </StackPane>
+                    <VBox alignment="CENTER_LEFT" spacing="3.0">
+                        <children>
+                            <Label fx:id="lblUsername" text="Admin: Chưa đăng nhập" textFill="WHITE">
+                                <font>
+                                    <Font name="System Bold" size="14.0" />
+                                </font>
+                            </Label>
+                        </children>
+                    </VBox>
+                </children>
+            </HBox>
+        </left>
+        <center>
+            <Label text="HỆ THỐNG QUẢN TRỊ" textFill="WHITE" BorderPane.alignment="CENTER">
+                <font>
+                    <Font name="System Bold" size="20.0" />
+                </font>
+            </Label>
+        </center>
+        <right>
+            <HBox alignment="CENTER_RIGHT" spacing="10.0" BorderPane.alignment="CENTER">
+                <children>
+                    <Button fx:id="btnRefresh" mnemonicParsing="false" style="-fx-background-color: #007bff; -fx-text-fill: white;" text="Làm mới dữ liệu" />
+                    <Button mnemonicParsing="false" onAction="#handleLogout" style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-weight: bold;" text="Đăng Xuất" />
+                </children>
+            </HBox>
+        </right>
+    </BorderPane>
+
+    <!-- Quản lý Người Dùng -->
+    <VBox spacing="10.0" style="-fx-border-color: #cccccc; -fx-border-radius: 5; -fx-padding: 15;">
+        <Label text="Quản lý Người Dùng" textFill="#333333">
             <font>
-                <Font name="System Bold" size="24.0" />
+                <Font name="System Bold" size="16.0" />
             </font>
         </Label>
-        <HBox alignment="CENTER_RIGHT" spacing="8.0" HBox.hgrow="ALWAYS">
-            <Button mnemonicParsing="false" onAction="#handleProfile" style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-weight: bold;" text="Profile" />
-            <Button mnemonicParsing="false" onAction="#handleLogout" style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-weight: bold;" text="Đăng Xuất" />
-            <Button fx:id="btnRefresh" mnemonicParsing="false" style="-fx-background-color: #007bff; -fx-text-fill: white;" text="Làm mới dữ liệu (Refresh)" />
+        <TableView fx:id="tableUsers" prefHeight="200.0" VBox.vgrow="SOMETIMES" />
+        <HBox spacing="10.0">
+            <Button fx:id="btnEditUser" text="Sửa Người Dùng"
+                    style="-fx-background-color: #f39c12; -fx-text-fill: white; -fx-font-weight: bold;" />
+            <Button fx:id="btnDeleteUser" text="Xóa Người Dùng"
+                    style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-weight: bold;" />
         </HBox>
-    </HBox>
-    <Label text="Quản lý Người Dùng">
-        <font>
-            <Font name="System Bold" size="16.0" />
-        </font>
-        <VBox.margin>
-            <Insets top="10.0" />
-        </VBox.margin>
-    </Label>
-    <TableView fx:id="tableUsers" prefHeight="250.0" VBox.vgrow="SOMETIMES">
-        <columns>
-            <TableColumn prefWidth="75.0" text="ID" />
-            <TableColumn prefWidth="200.0" text="Tên Đăng Nhập" />
-            <TableColumn prefWidth="250.0" text="Email" />
-            <TableColumn prefWidth="150.0" text="Chức Vụ (Role)" />
-            <TableColumn prefWidth="150.0" text="Số Dư ($)" />
-        </columns>
-    </TableView>
+    </VBox>
+
+    <!-- Duyệt phiên đấu giá chờ -->
     <VBox spacing="10.0" style="-fx-border-color: #cccccc; -fx-border-radius: 5; -fx-padding: 15;">
         <Label text="Duyệt phiên đấu giá chờ" textFill="#333333">
             <font>
                 <Font name="System Bold" size="16.0" />
             </font>
         </Label>
-
         <HBox spacing="10.0">
-            <Button fx:id="btnRefreshPending" text="Tải lại"
-                    style="-fx-background-color: #3498db; -fx-text-fill: white;" />
             <Button fx:id="btnApprove" text="Duyệt"
                     style="-fx-background-color: #28a745; -fx-text-fill: white; -fx-font-weight: bold;" />
         </HBox>
-
-        <TableView fx:id="tablePendingAuctions" prefHeight="300.0" VBox.vgrow="ALWAYS">
-            <columns>
-                <TableColumn prefWidth="75.0" text="ID" />
-                <TableColumn prefWidth="250.0" text="Tên Sản Phẩm" />
-                <TableColumn prefWidth="150.0" text="Giá Khởi Điểm" />
-                <TableColumn prefWidth="150.0" text="Trạng Thái" />
-            </columns>
-        </TableView>
+        <TableView fx:id="tablePendingAuctions" prefHeight="200.0" VBox.vgrow="SOMETIMES" />
     </VBox>
+
+    <!-- Quản lý Phiên Đấu Giá -->
     <HBox alignment="BOTTOM_LEFT" spacing="20.0">
         <Label text="Quản lý Phiên Đấu Giá">
             <font>
                 <Font name="System Bold" size="16.0" />
             </font>
             <HBox.margin>
-                <Insets top="15.0" />
+                <Insets top="5.0" />
             </HBox.margin>
         </Label>
         <Button fx:id="btnCancelAuction" mnemonicParsing="false" style="-fx-background-color: #dc3545; -fx-text-fill: white; -fx-font-weight: bold;" text="Hủy Phiên Vi Phạm" />
     </HBox>
-
-    <TableView fx:id="tableAllAuctions" prefHeight="250.0" VBox.vgrow="SOMETIMES">
-        <columns>
-            <TableColumn prefWidth="75.0" text="ID Phiên" />
-            <TableColumn prefWidth="250.0" text="Tên Sản Phẩm" />
-            <TableColumn prefWidth="150.0" text="Giá Cao Nhất" />
-            <TableColumn prefWidth="150.0" text="Người Giữ Giá" />
-            <TableColumn prefWidth="150.0" text="Trạng Thái" />
-        </columns>
-    </TableView>
+    <TableView fx:id="tableAllAuctions" prefHeight="200.0" VBox.vgrow="SOMETIMES" />
 </VBox>

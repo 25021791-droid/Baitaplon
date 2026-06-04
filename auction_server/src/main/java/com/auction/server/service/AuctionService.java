@@ -44,6 +44,19 @@ public class AuctionService {
                 return false;
             }
 
+            // Anti-sniping: Nếu cược đặt trong vòng 30 giây cuối cùng, gia hạn phiên thêm 30 giây
+            if (auction.getEndTime() != null) {
+                java.time.LocalDateTime now = java.time.LocalDateTime.now();
+                java.time.Duration timeRemaining = java.time.Duration.between(now, auction.getEndTime());
+                long secondsRemaining = timeRemaining.toSeconds();
+                if (secondsRemaining > 0 && secondsRemaining <= 30) {
+                    java.time.LocalDateTime newEndTime = auction.getEndTime().plusSeconds(30);
+                    auction.setEndTime(newEndTime);
+                    auctionRepository.updateTimes(auctionId, auction.getStartTime(), newEndTime);
+                    System.out.println("[AuctionService] Kích hoạt Anti-sniping: Gia hạn phiên " + auctionId + " thêm 30 giây. Thời gian kết thúc mới: " + newEndTime);
+                }
+            }
+
             // Ghi nhận giá mới và lưu Bid vào DB mà không thực hiện trừ/hoàn trả tiền ngay lập tức
             auction.setCurrentPrice(bidAmount);
 
@@ -135,7 +148,7 @@ public class AuctionService {
 
     public synchronized void endAuction(Auction auction) {
         if (auction.getStatus() != AuctionStatus.RUNNING) {
-            System.out.println("Only RUNNING auctions can be ended!");
+            System.out.println("Chỉ có phiên đang CHẠY mới có thể kết thúc!");
             return;
         }
 
@@ -165,31 +178,53 @@ public class AuctionService {
 
     public synchronized boolean payAuction(Auction auction) {
         if (auction.getStatus() != AuctionStatus.FINISHED) {
-            System.out.println("Auction must be FINISHED to pay!");
+            System.out.println("Phiên đấu giá phải ở trạng thái FINISHED để thanh toán!");
             return false;
         }
 
         auction.setStatus(AuctionStatus.PAID);
-        System.out.println("Auction marked as PAID!");
+        System.out.println("Phiên đấu giá đã được đánh dấu là ĐÃ THANH TOÁN!");
         return true;
     }
 
     public synchronized boolean cancelAuction(int auctionId) {
         boolean success = auctionRepository.updateStatus(auctionId, AuctionStatus.CANCELED);
         if (success) {
-            System.out.println("Auction canceled!");
+            System.out.println("Phiên đấu giá đã bị hủy!");
         }
         return true;
     }
 
     public synchronized boolean approveAuction(int auctionId) {
-        boolean success = auctionRepository.updateStatus(auctionId, AuctionStatus.RUNNING);
-        if (success) {
-            java.time.LocalDateTime now = java.time.LocalDateTime.now();
-            java.time.LocalDateTime endTime = now.plusSeconds(300);
-            auctionRepository.updateTimes(auctionId, now, endTime);
-            System.out.println("[Server] Admin đã duyệt + bắt đầu dữ liệu trong DB cho auction ID: " + auctionId + ". Thiết lập thời gian: " + now + " đến " + endTime);
+        Auction auction = auctionRepository.getAuctionById(auctionId);
+
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+        java.time.LocalDateTime endTime = null;
+
+        if (auction != null && auction.getStartTime() != null && auction.getEndTime() != null) {
+            long durationMinutes = java.time.Duration.between(auction.getStartTime(), auction.getEndTime()).toMinutes();
+
+            if (durationMinutes <= 0) {
+                durationMinutes = 4320;
+            }
+
+            endTime = now.plusMinutes(durationMinutes);
+            System.out.println("[Server] Tính toán thời gian thành công cho phiên ID: " + auctionId
+                    + " (Thời lượng: " + durationMinutes + " phút).");
+        } else {
+            endTime = now.plusMinutes(4320);
+            System.out.println("[Server Cảnh báo] Không tìm thấy mốc thời gian gốc của phiên ID: " + auctionId
+                    + ". Tự động thiết lập mặc định 3 ngày.");
         }
+
+        boolean success = auctionRepository.updateStatus(auctionId, AuctionStatus.RUNNING);
+
+        if (success && endTime != null) {
+            auctionRepository.updateTimes(auctionId, now, endTime);
+            System.out.println("[Server] Đã kích hoạt phiên đấu giá ID: " + auctionId
+                    + " thành công công khai. Thời gian chạy: " + now + " -> " + endTime);
+        }
+
         return success;
     }
 }

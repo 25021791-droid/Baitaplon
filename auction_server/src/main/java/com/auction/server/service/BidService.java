@@ -55,7 +55,7 @@ public class BidService {
             auction.getBids().add(bid);
 
             
-            notifyObservers(String.format("Phiên [%d] - Cập nhật giá mới: %,.0f VNĐ", auction.getId(), bid.getAmount()));
+            notifyObservers(String.format("Phiên [%d] - Cập nhật giá mới: %.0f VNĐ", auction.getId(), bid.getAmount()));
 
             return true;
 
